@@ -1,0 +1,2200 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UDK Gazbeton — Interactive Wireframe & Usability Showcase</title>
+  <style>
+    /* ─── BASE THEME & GRID (Blueprint Aesthetic) ─────────────────── */
+    :root {
+      --bg-color: #0f172a;
+      --grid-color: rgba(56, 189, 248, 0.04);
+      --grid-line: rgba(56, 189, 248, 0.1);
+      --text-color: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-rgb: 56, 189, 248;
+      --surface: #1e293b;
+      --surface-border: #334155;
+      --wireframe-bg: #18181b;
+      --wireframe-grid: rgba(255, 255, 255, 0.03);
+      --badge-bg: #e2e8f0;
+      --badge-text: #0f172a;
+      
+      --phone-width: 375px;
+      --tablet-width: 768px;
+      --desktop-width: 100%;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      background-image: 
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    /* ─── CONTROL HEADER ───────────────────────────────────────── */
+    .controls-header {
+      background-color: rgba(15, 23, 42, 0.9);
+      border-bottom: 1px solid var(--surface-border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(12px);
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      background: var(--accent);
+      color: #0f172a;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-text h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+    
+    .brand-text p {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .control-groups {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--surface-border);
+      padding: 4px;
+      border-radius: 8px;
+    }
+
+    .control-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .control-btn:hover {
+      color: var(--text-color);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .control-btn.active {
+      color: #0f172a;
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+    }
+
+    .toggle-switch {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 4px 10px;
+    }
+
+    .toggle-switch input {
+      display: none;
+    }
+
+    .switch-slider {
+      width: 36px;
+      height: 20px;
+      background-color: var(--surface-border);
+      border-radius: 20px;
+      position: relative;
+      transition: background-color 0.2s;
+    }
+
+    .switch-slider::before {
+      content: "";
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background-color: #fff;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.2s;
+    }
+
+    .toggle-switch input:checked + .switch-slider {
+      background-color: var(--accent);
+    }
+
+    .toggle-switch input:checked + .switch-slider::before {
+      transform: translateX(16px);
+    }
+
+    .toggle-switch:hover {
+      color: var(--text-color);
+    }
+
+    /* ─── MAIN CONTAINER (Split Layout) ────────────────────────── */
+    .app-viewport {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ─── WIREFRAME VIEWER CANVAS (Left) ───────────────────────── */
+    .canvas-pane {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow: auto;
+      position: relative;
+    }
+
+    /* Device frame wrapper */
+    .device-container {
+      width: var(--desktop-width);
+      max-width: 100%;
+      height: 100%;
+      background: var(--wireframe-bg);
+      border-radius: 12px;
+      border: 1px solid var(--surface-border);
+      overflow-y: auto;
+      overflow-x: hidden;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      position: relative;
+      background-image: 
+        linear-gradient(var(--wireframe-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--wireframe-grid) 1px, transparent 1px);
+      background-size: 15px 15px;
+      scroll-behavior: smooth;
+    }
+
+    .device-container.device-tablet {
+      width: var(--tablet-width);
+      height: 90%;
+      border: 12px solid #27272a;
+      border-radius: 24px;
+    }
+
+    .device-container.device-mobile {
+      width: var(--phone-width);
+      height: 85%;
+      border: 14px solid #27272a;
+      border-radius: 36px;
+    }
+
+    /* ─── LOW-FIDELITY WIREFRAME COMPONENTS ────────────────────── */
+    .wf-section {
+      position: relative;
+      border-bottom: 2px dashed rgba(255, 255, 255, 0.08);
+      padding: 60px 40px;
+      transition: all 0.3s;
+    }
+
+    .wf-section::after {
+      content: attr(data-label);
+      position: absolute;
+      top: 8px;
+      left: 12px;
+      font-family: monospace;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.25);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .wf-section.highlighted {
+      background-color: rgba(56, 189, 248, 0.03);
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
+
+    .wf-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Skeleton Helpers */
+    .skeleton-text {
+      height: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      margin-bottom: 12px;
+      border-radius: 3px;
+    }
+    
+    .skeleton-text.header {
+      height: 32px;
+      background: rgba(255, 255, 255, 0.15);
+      margin-bottom: 18px;
+      border-radius: 4px;
+    }
+
+    .skeleton-text.desc {
+      width: 85%;
+    }
+
+    .skeleton-text.short {
+      width: 40%;
+    }
+
+    .image-placeholder {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .image-placeholder::before, .image-placeholder::after {
+      content: "";
+      position: absolute;
+      width: 150%;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .image-placeholder::before { transform: rotate(45deg); }
+    .image-placeholder::after { transform: rotate(-45deg); }
+    
+    .image-placeholder span {
+      position: relative;
+      z-index: 2;
+      background: #18181b;
+      padding: 4px 8px;
+      font-size: 10px;
+      font-family: monospace;
+      color: rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Dynamic Badges Overlay */
+    .badge-trigger {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #0f172a;
+      font-weight: bold;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+      transition: all 0.2s ease;
+      z-index: 50;
+      opacity: 0;
+      transform: scale(0.6);
+      pointer-events: none;
+    }
+
+    .show-badges .badge-trigger {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+
+    .badge-trigger:hover {
+      transform: scale(1.15);
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.8);
+      background: #fff;
+    }
+
+    .badge-trigger.pulse::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      animation: pulse-ring 1.5s infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(0.9); opacity: 1; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+
+    /* ─── SPECIFIC BLOCK OUTLINES ──────────────────────────────── */
+    
+    /* 1. Splash Screen */
+    #wf-splash {
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #09090b;
+      min-height: 40px;
+    }
+    .splash-skeleton {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+      font-family: monospace;
+      color: rgba(255,255,255,0.4);
+    }
+    .splash-skeleton-bar {
+      width: 100px;
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+    }
+
+    /* 2. Navigation Header */
+    #wf-nav {
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(24, 24, 27, 0.95);
+      position: sticky;
+      top: 0;
+      z-index: 80;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .nav-logo-skel {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-badge-skel {
+      background: rgba(255,255,255,0.15);
+      width: 32px;
+      height: 18px;
+      border-radius: 2px;
+    }
+    .logo-text-skel {
+      width: 60px;
+      height: 10px;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .nav-links-skel {
+      display: flex;
+      gap: 16px;
+      list-style: none;
+    }
+    .nav-links-skel li {
+      width: 65px;
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 1px;
+    }
+
+    .nav-actions-skel {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-skel-cta {
+      width: 110px;
+      height: 28px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+    }
+    .lang-skel {
+      width: 40px;
+      height: 20px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 3px;
+    }
+
+    /* Mobile hamburger layout */
+    .tablet-mobile-only {
+      display: none;
+    }
+    .device-tablet .nav-links-skel, .device-mobile .nav-links-skel { display: none; }
+    .device-tablet .btn-skel-cta, .device-mobile .btn-skel-cta { display: none; }
+    .device-tablet .tablet-mobile-only, .device-mobile .tablet-mobile-only { display: block; }
+    .burger-skel {
+      width: 24px;
+      height: 18px;
+      border-top: 2px solid rgba(255,255,255,0.5);
+      border-bottom: 2px solid rgba(255,255,255,0.5);
+      position: relative;
+    }
+    .burger-skel::before {
+      content: "";
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: rgba(255,255,255,0.5);
+      top: 6px;
+    }
+
+    /* 3. Hero Section */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 40px;
+      align-items: center;
+    }
+    .hero-btn-row {
+      display: flex;
+      gap: 12px;
+      margin: 20px 0 30px;
+    }
+    .btn-skel-large {
+      width: 160px;
+      height: 38px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+    }
+    .btn-skel-large.primary {
+      background: rgba(56, 189, 248, 0.1);
+      border-color: var(--accent);
+    }
+    
+    .hero-stats-skel {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 20px;
+    }
+    .stat-card-skel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .stat-num-skel {
+      height: 24px;
+      background: rgba(255,255,255,0.15);
+      width: 60%;
+      border-radius: 3px;
+    }
+    .stat-lbl-skel {
+      height: 8px;
+      background: rgba(255,255,255,0.06);
+      width: 90%;
+      border-radius: 1px;
+    }
+
+    .hero-visual-card {
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.02);
+      border-radius: 8px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .card-row-skel {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px dashed rgba(255,255,255,0.05);
+      padding-bottom: 8px;
+    }
+    .row-key-skel {
+      width: 70px;
+      height: 8px;
+      background: rgba(255,255,255,0.06);
+    }
+    .row-val-skel {
+      width: 110px;
+      height: 8px;
+      background: rgba(255,255,255,0.12);
+    }
+
+    .device-mobile .hero-grid, .device-tablet .hero-grid {
+      grid-template-columns: 1fr;
+    }
+    .device-mobile .hero-stats-skel {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* 4. Trust Bar Ticker */
+    #wf-trust {
+      padding: 20px 40px;
+      background: rgba(255, 255, 255, 0.02);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      overflow: hidden;
+    }
+    .trust-ticker-skel {
+      display: flex;
+      justify-content: space-around;
+      gap: 20px;
+      opacity: 0.4;
+      font-family: monospace;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    /* 5. Product Catalog Section */
+    .grid-3-col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 40px;
+    }
+    .prod-card-skel {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 24px;
+      background: rgba(255,255,255,0.02);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+    }
+    .icon-box-skel {
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px;
+    }
+    .arrow-skel {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      font-family: monospace;
+      color: rgba(255,255,255,0.3);
+    }
+    
+    .device-tablet .grid-3-col {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .device-mobile .grid-3-col {
+      grid-template-columns: 1fr;
+    }
+
+    /* 6. Technical Specifications / Sizes Section */
+    .tabs-skel {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 8px;
+    }
+    .tab-btn-skel {
+      width: 100px;
+      height: 28px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 4px;
+    }
+    .tab-btn-skel.active {
+      background: rgba(56,189,248,0.1);
+      border-color: var(--accent);
+    }
+
+    .table-skel {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      background: rgba(255,255,255,0.01);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .table-row-skel {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .table-cell-skel {
+      height: 8px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 1px;
+    }
+
+    /* 7. Compare Section */
+    .compare-grid-skel {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 30px;
+    }
+    .compare-card-skel {
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.02);
+      border-radius: 8px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .compare-card-skel.featured {
+      border: 2px solid var(--accent);
+      background: rgba(56,189,248,0.02);
+      box-shadow: 0 4px 20px rgba(56, 189, 248, 0.15);
+    }
+    
+    .compare-density-skel {
+      font-size: 24px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.6);
+      font-family: monospace;
+    }
+    .compare-badge-skel {
+      background: var(--accent);
+      color: #0f172a;
+      font-size: 9px;
+      padding: 2px 6px;
+      align-self: flex-start;
+      border-radius: 2px;
+      font-weight: bold;
+    }
+
+    .device-tablet .compare-grid-skel {
+      grid-template-columns: 1fr;
+    }
+    .device-mobile .compare-grid-skel {
+      grid-template-columns: 1fr;
+    }
+
+    /* 8. Calculator Section */
+    .calc-layout-skel {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 40px;
+      margin-top: 30px;
+    }
+    .calc-inputs-skel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .form-group-skel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .form-lbl-skel {
+      width: 80px;
+      height: 8px;
+      background: rgba(255,255,255,0.15);
+    }
+    .form-input-skel {
+      height: 38px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.03);
+      border-radius: 4px;
+    }
+    
+    .calc-results-skel {
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.02);
+      border-radius: 8px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      text-align: center;
+    }
+    .big-num-circle-skel {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 4px dashed rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-family: monospace;
+      color: rgba(255,255,255,0.3);
+    }
+
+    .device-tablet .calc-layout-skel, .device-mobile .calc-layout-skel {
+      grid-template-columns: 1fr;
+    }
+
+    /* 9. B2B Wholesale Request Section */
+    .b2b-layout-skel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-top: 30px;
+    }
+    .checklist-skel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .checklist-item-skel {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .check-box-skel {
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      border-radius: 3px;
+    }
+
+    .b2b-form-skel {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .device-tablet .b2b-layout-skel, .device-mobile .b2b-layout-skel {
+      grid-template-columns: 1fr;
+    }
+
+    /* 10. Technical Center Section */
+    .tech-grid-skel {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-top: 30px;
+    }
+    .tech-card-skel {
+      border: 1px dashed rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.01);
+      border-radius: 8px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .select-dropdown-skel {
+      height: 32px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      border-radius: 4px;
+    }
+
+    .device-mobile .tech-grid-skel {
+      grid-template-columns: 1fr;
+    }
+
+    /* 11. Process Timeline Section */
+    .timeline-track-skel {
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      margin: 40px 0;
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .timeline-node-skel {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #18181b;
+      border: 2px solid rgba(255,255,255,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-family: monospace;
+      color: rgba(255,255,255,0.4);
+    }
+    .timeline-node-skel.active {
+      border-color: var(--accent);
+      background: rgba(56,189,248,0.2);
+    }
+    
+    .timeline-step-labels {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      text-align: center;
+    }
+    .timeline-label-skel {
+      font-size: 10px;
+      font-family: monospace;
+      color: rgba(255,255,255,0.3);
+    }
+
+    .device-mobile .timeline-track-skel {
+      flex-direction: column;
+      height: 300px;
+      width: 4px;
+      margin: 20px auto;
+    }
+    .device-mobile .timeline-step-labels {
+      grid-template-columns: 1fr;
+      gap: 20px;
+      text-align: left;
+      padding-left: 20px;
+    }
+
+    /* 12. Dealers Map Section */
+    .dealers-grid-skel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-top: 30px;
+    }
+    
+    .device-tablet .dealers-grid-skel, .device-mobile .dealers-grid-skel {
+      grid-template-columns: 1fr;
+    }
+
+    /* 13. FAQ Accordion Section */
+    .faq-list-skel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 30px;
+    }
+    .faq-bar-skel {
+      height: 48px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.02);
+      border-radius: 6px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .faq-plus-skel {
+      font-family: monospace;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* 14. Footer */
+    #wf-footer {
+      background: #09090b;
+      padding: 40px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .footer-grid-skel {
+      display: grid;
+      grid-template-columns: 2fr repeat(3, 1fr);
+      gap: 40px;
+    }
+    .footer-col-skel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .device-tablet .footer-grid-skel, .device-mobile .footer-grid-skel {
+      grid-template-columns: 1fr;
+    }
+
+    /* Floating elements skeletons */
+    .float-widgets-skel {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 60;
+    }
+    .chat-btn-skel {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      border: 2px dashed rgba(255,255,255,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .cookie-bar-skel {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      background: rgba(24, 24, 27, 0.95);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 70;
+    }
+
+    /* ─── DETAILED USABILITY ANALYSIS DRAWER (Right) ──────────── */
+    .drawer-pane {
+      width: 480px;
+      background-color: rgba(30, 41, 59, 0.85);
+      border-left: 1px solid var(--surface-border);
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(20px);
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.4);
+      z-index: 90;
+      flex-shrink: 0;
+      transition: width 0.3s;
+    }
+
+    .drawer-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--surface-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .drawer-header h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .drawer-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--surface-border);
+      background: rgba(15, 23, 42, 0.2);
+    }
+
+    .drawer-tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      transition: all 0.2s;
+    }
+
+    .drawer-tab:hover {
+      color: var(--text-color);
+    }
+
+    .drawer-tab.active {
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .drawer-content {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    /* Interactive highlights */
+    .justification-card {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 16px;
+      transition: all 0.2s;
+    }
+    
+    .justification-card:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .justification-card h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .justification-card p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .law-badge {
+      display: inline-block;
+      font-size: 10px;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: monospace;
+      margin-top: 10px;
+      text-transform: uppercase;
+    }
+
+    .metric-badge {
+      display: inline-block;
+      font-size: 10px;
+      background: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: monospace;
+      margin-top: 10px;
+      margin-left: 6px;
+      text-transform: uppercase;
+    }
+
+    /* Explanatory Overlay Badge in Sidebar */
+    .badge-label {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #0f172a;
+      font-weight: bold;
+      font-size: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Introductory state */
+    .intro-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      color: var(--text-muted);
+      gap: 16px;
+    }
+    
+    .intro-state svg {
+      color: var(--surface-border);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .intro-state p {
+      font-size: 13px;
+      max-width: 280px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body class="show-badges">
+
+  <!-- ─── CONTROL HEADER ───────────────────────────────────────── -->
+  <header class="controls-header">
+    <div class="brand-title">
+      <div class="brand-logo">UDK</div>
+      <div class="brand-text">
+        <h1>Wireframe & Usability Showcase</h1>
+        <p>Interactive Low-Fidelity Blueprint / Завод · Дніпро</p>
+      </div>
+    </div>
+
+    <div class="control-groups">
+      <!-- 1. Viewport Selection -->
+      <div class="control-group">
+        <button class="control-btn active" onclick="setViewport('desktop')" id="btn-desktop">
+          💻 Desktop
+        </button>
+        <button class="control-btn" onclick="setViewport('tablet')" id="btn-tablet">
+          📁 Tablet
+        </button>
+        <button class="control-btn" onclick="setViewport('mobile')" id="btn-mobile">
+          📱 Mobile
+        </button>
+      </div>
+
+      <!-- 2. Interactive Badges Toggle -->
+      <div class="control-group">
+        <label class="toggle-switch">
+          <input type="checkbox" id="badges-toggle" checked onchange="toggleBadgesOverlay()">
+          <span class="switch-slider"></span>
+          <span>UX Hotspots / Маркери</span>
+        </label>
+      </div>
+
+      <!-- 3. Language Selector -->
+      <div class="control-group">
+        <button class="control-btn active" onclick="setLang('ua')" id="btn-lang-ua">UA</button>
+        <button class="control-btn" onclick="setLang('en')" id="btn-lang-en">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── MAIN CONTAINER ────────────────────────────────────────── -->
+  <main class="app-viewport">
+    
+    <!-- ─── WIREFRAME VIEWER CANVAS (Left) ───────────────────────── -->
+    <section class="canvas-pane">
+      <div class="device-container" id="wireframe-container">
+        
+        <!-- BLOCK 0: Splash Screen -->
+        <div class="wf-section" id="wf-splash" data-label="Splash Screen" onclick="inspectBlock('splash')">
+          <div class="badge-trigger pulse" id="b-splash">0</div>
+          <div class="splash-skeleton">
+            <span>UDK Gazbeton Loading...</span>
+            <div class="splash-skeleton-bar"></div>
+          </div>
+        </div>
+
+        <!-- BLOCK 1: Header/Navigation -->
+        <nav class="wf-section" id="wf-nav" data-label="Header / Navigation" onclick="inspectBlock('nav')">
+          <div class="badge-trigger pulse" id="b-nav">1</div>
+          <div class="nav-logo-skel">
+            <div class="logo-badge-skel"></div>
+            <div class="logo-text-skel"></div>
+          </div>
+          <ul class="nav-links-skel">
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+          </ul>
+          <div class="nav-actions-skel">
+            <div class="btn-skel-cta"></div>
+            <div class="lang-skel"></div>
+            <div class="burger-skel tablet-mobile-only"></div>
+          </div>
+        </nav>
+
+        <!-- BLOCK 2: Hero Section -->
+        <section class="wf-section" id="wf-hero" data-label="Hero Block" onclick="inspectBlock('hero')">
+          <div class="badge-trigger pulse" id="b-hero">2</div>
+          <div class="wf-container hero-grid">
+            <div>
+              <div class="skeleton-text header" style="width: 80%"></div>
+              <div class="skeleton-text header" style="width: 50%"></div>
+              <div class="skeleton-text desc"></div>
+              <div class="skeleton-text desc" style="width: 70%"></div>
+              <div class="hero-btn-row">
+                <div class="btn-skel-large primary"></div>
+                <div class="btn-skel-large"></div>
+              </div>
+              <div class="hero-stats-skel">
+                <div class="stat-card-skel">
+                  <div class="stat-num-skel"></div>
+                  <div class="stat-lbl-skel"></div>
+                </div>
+                <div class="stat-card-skel">
+                  <div class="stat-num-skel"></div>
+                  <div class="stat-lbl-skel"></div>
+                </div>
+                <div class="stat-card-skel">
+                  <div class="stat-num-skel" style="width: 40%"></div>
+                  <div class="stat-lbl-skel"></div>
+                </div>
+                <div class="stat-card-skel">
+                  <div class="stat-num-skel"></div>
+                  <div class="stat-lbl-skel"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="hero-visual-card">
+              <div class="card-row-skel">
+                <div class="row-key-skel"></div>
+                <div class="row-val-skel"></div>
+              </div>
+              <div class="card-row-skel">
+                <div class="row-key-skel"></div>
+                <div class="row-val-skel"></div>
+              </div>
+              <div class="card-row-skel">
+                <div class="row-key-skel"></div>
+                <div class="row-val-skel"></div>
+              </div>
+              <div class="card-row-skel">
+                <div class="row-key-skel"></div>
+                <div class="row-val-skel"></div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:8px">
+                <div class="lang-skel" style="width:50px"></div>
+                <div class="lang-skel" style="width:50px"></div>
+                <div class="lang-skel" style="width:50px"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- BLOCK 3: Trust Bar -->
+        <div class="wf-section" id="wf-trust" data-label="Trust Marquee" onclick="inspectBlock('trust')">
+          <div class="badge-trigger pulse" id="b-trust">3</div>
+          <div class="trust-ticker-skel">
+            <span>✓ Masa GmbH Equipment</span>
+            <span>✓ In-house Laboratory</span>
+            <span>✓ ISO 9001</span>
+            <span>✓ CE EN 771-4</span>
+            <span>✓ Category I ±1 mm</span>
+          </div>
+        </div>
+
+        <!-- BLOCK 4: Product Catalog -->
+        <section class="wf-section" id="wf-products" data-label="Product Catalog" onclick="inspectBlock('products')">
+          <div class="badge-trigger pulse" id="b-products">4</div>
+          <div class="wf-container">
+            <div class="skeleton-text short" style="margin-bottom:8px"></div>
+            <div class="skeleton-text header" style="width:40%"></div>
+            
+            <div class="grid-3-col">
+              <div class="prod-card-skel">
+                <div class="arrow-skel">↗</div>
+                <div class="icon-box-skel"></div>
+                <div class="skeleton-text header" style="height:18px;width:70%;margin-bottom:0"></div>
+                <div class="skeleton-text"></div>
+                <div class="table-skel">
+                  <div class="table-row-skel"><div class="row-key-skel" style="width:40px"></div><div class="row-val-skel" style="width:50px"></div></div>
+                  <div class="table-row-skel"><div class="row-key-skel" style="width:40px"></div><div class="row-val-skel" style="width:50px"></div></div>
+                </div>
+              </div>
+              
+              <div class="prod-card-skel">
+                <div class="arrow-skel">↗</div>
+                <div class="icon-box-skel"></div>
+                <div class="skeleton-text header" style="height:18px;width:70%;margin-bottom:0"></div>
+                <div class="skeleton-text"></div>
+                <div class="table-skel">
+                  <div class="table-row-skel"><div class="row-key-skel" style="width:40px"></div><div class="row-val-skel" style="width:50px"></div></div>
+                  <div class="table-row-skel"><div class="row-key-skel" style="width:40px"></div><div class="row-val-skel" style="width:50px"></div></div>
+                </div>
+              </div>
+              
+              <div class="prod-card-skel">
+                <div class="arrow-skel">↗</div>
+                <div class="icon-box-skel"></div>
+                <div class="skeleton-text header" style="height:18px;width:70%;margin-bottom:0"></div>
+                <div class="skeleton-text"></div>
+                <div class="table-skel">
+                  <div class="table-row-skel"><div class="row-key-skel" style="width:40px"></div><div class="row-val-skel" style="width:50px"></div></div>
+                  <div class="table-row-skel"><div class="row-key-skel" style="width:40px"></div><div class="row-val-skel" style="width:50px"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- BLOCK 5: Technical Specs / Sizes -->
+        <section class="wf-section" id="wf-sizes" data-label="Specs Tabs & Grid" onclick="inspectBlock('sizes')">
+          <div class="badge-trigger pulse" id="b-sizes">5</div>
+          <div class="wf-container">
+            <div class="skeleton-text short" style="margin-bottom:8px"></div>
+            <div class="skeleton-text header" style="width:35%"></div>
+            
+            <div class="tabs-skel">
+              <div class="tab-btn-skel active"></div>
+              <div class="tab-btn-skel"></div>
+              <div class="tab-btn-skel"></div>
+            </div>
+            
+            <div class="table-skel" style="padding: 20px">
+              <div class="table-row-skel" style="border-bottom: 2px solid rgba(255,255,255,0.15)">
+                <div class="table-cell-skel" style="width:20%;height:12px"></div>
+                <div class="table-cell-skel" style="width:15%;height:12px"></div>
+                <div class="table-cell-skel" style="width:20%;height:12px"></div>
+                <div class="table-cell-skel" style="width:15%;height:12px"></div>
+              </div>
+              <div class="table-row-skel"><div class="table-cell-skel" style="width:18%"></div><div class="table-cell-skel" style="width:12%"></div><div class="table-cell-skel" style="width:18%"></div><div class="table-cell-skel" style="width:10%"></div></div>
+              <div class="table-row-skel"><div class="table-cell-skel" style="width:18%"></div><div class="table-cell-skel" style="width:12%"></div><div class="table-cell-skel" style="width:18%"></div><div class="table-cell-skel" style="width:10%"></div></div>
+              <div class="table-row-skel"><div class="table-cell-skel" style="width:18%"></div><div class="table-cell-skel" style="width:12%"></div><div class="table-cell-skel" style="width:18%"></div><div class="table-cell-skel" style="width:10%"></div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- BLOCK 6: Compare Section -->
+        <section class="wf-section" id="wf-compare" data-label="Anchored Compare" onclick="inspectBlock('compare')">
+          <div class="badge-trigger pulse" id="b-compare">6</div>
+          <div class="wf-container">
+            <div class="skeleton-text header" style="width:40%;margin:0 auto 40px;text-align:center"></div>
+            
+            <div class="compare-grid-skel">
+              <div class="compare-card-skel">
+                <div class="compare-density-skel">D400</div>
+                <div class="skeleton-text short"></div>
+                <div class="skeleton-text"></div>
+                <div class="table-skel">
+                  <div class="table-row-skel"><div class="row-key-skel"></div><div class="row-val-skel"></div></div>
+                  <div class="table-row-skel"><div class="row-key-skel"></div><div class="row-val-skel"></div></div>
+                </div>
+              </div>
+              
+              <div class="compare-card-skel featured">
+                <div class="compare-badge-skel">FEATURED</div>
+                <div class="compare-density-skel" style="color:var(--accent)">D500</div>
+                <div class="skeleton-text short"></div>
+                <div class="skeleton-text"></div>
+                <div class="table-skel">
+                  <div class="table-row-skel"><div class="row-key-skel"></div><div class="row-val-skel"></div></div>
+                  <div class="table-row-skel"><div class="row-key-skel"></div><div class="row-val-skel"></div></div>
+                </div>
+              </div>
+              
+              <div class="compare-card-skel">
+                <div class="compare-density-skel">U-BLOCK</div>
+                <div class="skeleton-text short"></div>
+                <div class="skeleton-text"></div>
+                <div class="table-skel">
+                  <div class="table-row-skel"><div class="row-key-skel"></div><div class="row-val-skel"></div></div>
+                  <div class="table-row-skel"><div class="row-key-skel"></div><div class="row-val-skel"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- BLOCK 7: Calculator Section -->
+        <section class="wf-section" id="wf-calc" data-label="Calculator Widget" onclick="inspectBlock('calc')">
+          <div class="badge-trigger pulse" id="b-calc">7</div>
+          <div class="wf-container">
+            <div class="skeleton-text header" style="width:30%"></div>
+            
+            <div class="calc-layout-skel">
+              <div class="calc-inputs-skel">
+                <div class="form-group-skel">
+                  <div class="form-lbl-skel"></div>
+                  <div class="form-input-skel"></div>
+                </div>
+                <div class="form-group-skel">
+                  <div class="form-lbl-skel" style="width:110px"></div>
+                  <div class="form-input-skel"></div>
+                </div>
+                <div style="display:flex;gap:12px">
+                  <div class="form-group-skel" style="flex:1">
+                    <div class="form-lbl-skel"></div>
+                    <div class="form-input-skel"></div>
+                  </div>
+                  <div class="form-group-skel" style="flex:1">
+                    <div class="form-lbl-skel"></div>
+                    <div class="form-input-skel"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="calc-results-skel">
+                <div class="form-lbl-skel" style="width:120px"></div>
+                <div class="big-num-circle-skel">550</div>
+                <div class="skeleton-text short" style="margin-bottom:0"></div>
+                <div class="table-skel" style="width:100%">
+                  <div class="table-row-skel"><div class="row-key-skel"></div><div class="row-val-skel"></div></div>
+                  <div class="table-row-skel"><div class="row-key-skel"></div><div class="row-val-skel"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- BLOCK 8: B2B Section -->
+        <section class="wf-section" id="wf-b2b" data-label="B2B Wholesale Hub" onclick="inspectBlock('b2b')">
+          <div class="badge-trigger pulse" id="b-b2b">8</div>
+          <div class="wf-container b2b-layout-skel">
+            <div>
+              <div class="skeleton-text short" style="margin-bottom:8px"></div>
+              <div class="skeleton-text header" style="width:75%"></div>
+              <div class="skeleton-text"></div>
+              
+              <div class="checklist-skel" style="margin-top:20px">
+                <div class="checklist-item-skel"><div class="check-box-skel"></div><div class="row-val-skel" style="width:180px"></div></div>
+                <div class="checklist-item-skel"><div class="check-box-skel"></div><div class="row-val-skel" style="width:220px"></div></div>
+                <div class="checklist-item-skel"><div class="check-box-skel"></div><div class="row-val-skel" style="width:190px"></div></div>
+              </div>
+            </div>
+            
+            <div class="b2b-form-skel">
+              <div class="form-group-skel"><div class="form-input-skel"></div></div>
+              <div class="form-group-skel"><div class="form-input-skel"></div></div>
+              <div class="form-group-skel"><div class="form-input-skel"></div></div>
+              <div class="form-group-skel"><div class="form-input-skel" style="height:70px"></div></div>
+              <div class="btn-skel-large primary" style="width:100%;margin-top:10px"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- BLOCK 9: Technical Center -->
+        <section class="wf-section" id="wf-tech" data-label="Technical Hub" onclick="inspectBlock('tech')">
+          <div class="badge-trigger pulse" id="b-tech">9</div>
+          <div class="wf-container">
+            <div class="skeleton-text short" style="margin-bottom:8px"></div>
+            <div class="skeleton-text header" style="width:30%"></div>
+            
+            <div class="tech-grid-skel">
+              <div class="tech-card-skel">
+                <div class="icon-box-skel" style="width:32px;height:32px"></div>
+                <div class="skeleton-text header" style="height:14px;width:60%;margin-bottom:0"></div>
+                <div class="skeleton-text"></div>
+                <div class="select-dropdown-skel"></div>
+                <div class="select-dropdown-skel"></div>
+                <div class="btn-skel-large" style="width:100%"></div>
+              </div>
+              
+              <div class="tech-card-skel">
+                <div class="icon-box-skel" style="width:32px;height:32px"></div>
+                <div class="skeleton-text header" style="height:14px;width:60%;margin-bottom:0"></div>
+                <div class="skeleton-text"></div>
+                <div class="select-dropdown-skel"></div>
+                <div class="btn-skel-large" style="width:100%"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- BLOCK 10: Process Timeline -->
+        <section class="wf-section" id="wf-process" data-label="Process Storyteller" onclick="inspectBlock('process')">
+          <div class="badge-trigger pulse" id="b-process">10</div>
+          <div class="wf-container">
+            <div class="skeleton-text header" style="width:25%;margin:0 auto;text-align:center"></div>
+            
+            <div class="timeline-track-skel">
+              <div class="timeline-node-skel active">01</div>
+              <div class="timeline-node-skel">02</div>
+              <div class="timeline-node-skel">03</div>
+              <div class="timeline-node-skel">04</div>
+              <div class="timeline-node-skel">05</div>
+              <div class="timeline-node-skel">06</div>
+            </div>
+            
+            <div class="timeline-step-labels">
+              <div class="timeline-label-skel"><div class="skeleton-text short" style="margin:0 auto 4px"></div><div class="stat-lbl-skel" style="margin:0 auto"></div></div>
+              <div class="timeline-label-skel"><div class="skeleton-text short" style="margin:0 auto 4px"></div><div class="stat-lbl-skel" style="margin:0 auto"></div></div>
+              <div class="timeline-label-skel"><div class="skeleton-text short" style="margin:0 auto 4px"></div><div class="stat-lbl-skel" style="margin:0 auto"></div></div>
+              <div class="timeline-label-skel"><div class="skeleton-text short" style="margin:0 auto 4px"></div><div class="stat-lbl-skel" style="margin:0 auto"></div></div>
+              <div class="timeline-label-skel"><div class="skeleton-text short" style="margin:0 auto 4px"></div><div class="stat-lbl-skel" style="margin:0 auto"></div></div>
+              <div class="timeline-label-skel"><div class="skeleton-text short" style="margin:0 auto 4px"></div><div class="stat-lbl-skel" style="margin:0 auto"></div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- BLOCK 11: Dealers Map -->
+        <section class="wf-section" id="wf-dealers" data-label="Dealers Directory" onclick="inspectBlock('dealers')">
+          <div class="badge-trigger pulse" id="b-dealers">11</div>
+          <div class="wf-container dealers-grid-skel">
+            <div class="image-placeholder" style="height: 320px; border-radius: 8px;">
+              <span>Interactive Google Map Frame</span>
+            </div>
+            <div>
+              <div class="skeleton-text short" style="margin-bottom:8px"></div>
+              <div class="skeleton-text header" style="width:70%"></div>
+              <div class="skeleton-text"></div>
+              
+              <div class="table-skel" style="margin-top:20px">
+                <div class="table-row-skel"><div class="row-key-skel" style="width:140px"></div><div class="row-val-skel" style="width:30px"></div></div>
+                <div class="table-row-skel"><div class="row-key-skel" style="width:140px"></div><div class="row-val-skel" style="width:30px"></div></div>
+                <div class="table-row-skel"><div class="row-key-skel" style="width:140px"></div><div class="row-val-skel" style="width:30px"></div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- BLOCK 12: FAQ Accordion -->
+        <section class="wf-section" id="wf-faq" data-label="SEO Accordion / FAQ" onclick="inspectBlock('faq')">
+          <div class="badge-trigger pulse" id="b-faq">12</div>
+          <div class="wf-container">
+            <div class="skeleton-text short" style="margin-bottom:8px;margin:0 auto"></div>
+            <div class="skeleton-text header" style="width:35%;margin:0 auto 30px"></div>
+            
+            <div class="faq-list-skel">
+              <div class="faq-bar-skel"><div class="row-key-skel" style="width:240px"></div><div class="faq-plus-skel">+</div></div>
+              <div class="faq-bar-skel"><div class="row-key-skel" style="width:310px"></div><div class="faq-plus-skel">+</div></div>
+              <div class="faq-bar-skel"><div class="row-key-skel" style="width:280px"></div><div class="faq-plus-skel">+</div></div>
+              <div class="faq-bar-skel"><div class="row-key-skel" style="width:190px"></div><div class="faq-plus-skel">+</div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- BLOCK 13: Footer -->
+        <footer class="wf-section" id="wf-footer" data-label="Footer Navigation" onclick="inspectBlock('footer')">
+          <div class="badge-trigger pulse" id="b-footer">13</div>
+          <div class="wf-container footer-grid-skel">
+            <div class="footer-col-skel">
+              <div class="nav-logo-skel">
+                <div class="logo-badge-skel"></div>
+                <div class="logo-text-skel"></div>
+              </div>
+              <div class="skeleton-text desc"></div>
+              <div class="skeleton-text desc" style="width:50%"></div>
+            </div>
+            <div class="footer-col-skel">
+              <div class="form-lbl-skel"></div>
+              <div class="skeleton-text desc" style="margin-bottom:4px"></div>
+              <div class="skeleton-text desc" style="margin-bottom:4px"></div>
+              <div class="skeleton-text desc" style="margin-bottom:4px"></div>
+            </div>
+            <div class="footer-col-skel">
+              <div class="form-lbl-skel"></div>
+              <div class="skeleton-text desc" style="margin-bottom:4px"></div>
+              <div class="skeleton-text desc" style="margin-bottom:4px"></div>
+            </div>
+            <div class="footer-col-skel">
+              <div class="form-lbl-skel"></div>
+              <div class="skeleton-text desc" style="margin-bottom:4px"></div>
+              <div class="skeleton-text desc" style="margin-bottom:4px"></div>
+            </div>
+          </div>
+        </footer>
+
+        <!-- Skeletons of floating widgets -->
+        <div class="float-widgets-skel">
+          <div class="chat-btn-skel" onclick="inspectBlock('chat'); event.stopPropagation();">💬</div>
+        </div>
+        
+        <div class="cookie-bar-skel" onclick="inspectBlock('cookie'); event.stopPropagation();">
+          <div style="display:flex; flex-direction:column; gap:4px">
+            <div class="form-lbl-skel" style="width:90px"></div>
+            <div class="stat-lbl-skel" style="width:200px"></div>
+          </div>
+          <div class="lang-skel" style="width:70px"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ─── DETAILED USABILITY ANALYSIS DRAWER (Right) ──────────── -->
+    <aside class="drawer-pane" id="drawer">
+      <div class="drawer-header">
+        <h2 id="drawer-title">
+          <span>🧠</span> UX Usability Center
+        </h2>
+        <div class="badge-label" id="active-badge" style="display:none">0</div>
+      </div>
+      
+      <div class="drawer-tabs">
+        <button class="drawer-tab active" onclick="switchDrawerTab('analysis')" id="tab-analysis-btn">Section Analysis</button>
+        <button class="drawer-tab" onclick="switchDrawerTab('laws')" id="tab-laws-btn">UX Principles</button>
+      </div>
+
+      <div class="drawer-content" id="drawer-main-content">
+        <!-- Default State -->
+        <div class="intro-state" id="intro-view">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 16v-4M12 8h.01"/>
+          </svg>
+          <div style="text-align:center">
+            <h3 style="font-size:15px; margin-bottom:6px; color:#fff;" data-ua="Натисніть на блок або маркер" data-en="Click a block or UX Hotspot">Натисніть на блок або маркер</h3>
+            <p data-ua="Оберіть будь-яку секцію зліва, щоб завантажити докладне обґрунтування розташування блоків за принципами UX & Usability." data-en="Select any layout section on the left to load the structural usability analysis mapped to global user experience design laws.">Оберіть будь-яку секцію зліва, щоб завантажити докладне обґрунтування розташування блоків за принципами UX & Usability.</p>
+          </div>
+        </div>
+
+        <!-- Dynamic Content View -->
+        <div id="content-view" style="display:none">
+          <div id="section-meta" style="margin-bottom:20px">
+            <span class="law-badge" id="meta-ux-law">Hick's Law</span>
+            <span class="metric-badge" id="meta-ux-metric">Conversion</span>
+          </div>
+          
+          <div id="justifications-container">
+            <!-- Dynamic items loaded by JS -->
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- ─── INTERACTIVE JAVASCRIPT DATA & LOGIC ──────────────────── -->
+  <script>
+    // ─── TRANSLATED DATASET OF USABILITY JUSTIFICATIONS ──────────
+    const dataset = {
+      splash: {
+        badge: 0,
+        law: { ua: "UX Сприйняття", en: "UX Perception" },
+        metric: { ua: "Зменшення відмов", en: "Bounce Rate" },
+        title: {
+          ua: "Завантажувальний екран (Splash Screen)",
+          en: "Loading Screen (Splash Screen)"
+        },
+        points: [
+          {
+            title: { ua: "Керування часом завантаження", en: "Perceived Caching & Performance" },
+            desc: {
+              ua: "Згідно з дослідженнями продуктивності UX, сторінки, що вантажаться довше 3 секунд, втрачають до 40% користувачів. Splash-екран з прогрес-баром візуально прискорює сприйняття завантаження, даючи системі час ініціалізувати PWA кеш.",
+              en: "According to web performance research, sites taking over 3s to load lose up to 40% of users. The clean splash loader structures screen-entry, providing visual continuity while the browser registers service workers and caches assets."
+            }
+          },
+          {
+            title: { ua: "Брендинг з першої секунди", en: "First-Second Branding" },
+            desc: {
+              ua: "Асоціація бренду (логотип UDK + Дніпро) формується у перші 50 мілісекунд візиту. Фокусування уваги на мінімалістичному логотипі створює відчуття преміального серйозного заводу.",
+              en: "Brand recognition initiates within 50 milliseconds of screen arrival. A minimalist entry layout with clear typography builds corporate identity before the user even begins scanning the landing page content."
+            }
+          }
+        ]
+      },
+      nav: {
+        badge: 1,
+        law: { ua: "Закон Якоба / Gutenberg Diagram", en: "Jakob's Law / Gutenberg Diagram" },
+        metric: { ua: "Навігаційне тертя", en: "Navigational Friction" },
+        title: {
+          ua: "Шапка сайту та Навігація",
+          en: "Header & Navigation Bar"
+        },
+        points: [
+          {
+            title: { ua: "Закон Якоба: очікуване розміщення", en: "Jakob's Law: Standardized Logo Placement" },
+            desc: {
+              ua: "Логотип UDK розташовано у верхньому лівому кутку. Користувачі проводять більшу частину свого часу на інших сайтах і очікують бачити логотип та кнопку повернення додому саме там. Відхилення від цього патерну збільшує когнітивне навантаження.",
+              en: "Placing the brand logo on the top-left coordinates satisfies expectation (Jakob's Law). Users spend most of their time on other websites and expect consistent placement, reducing cognitive load upon landing."
+            }
+          },
+          {
+            title: { ua: "Діаграма Гутенберга & Термінальна Зона", en: "Gutenberg Diagram & Terminal Area" },
+            desc: {
+              ua: "Головна цільова кнопка конверсії 'Оптовий запит' (CTA) виділена фоном і поміщена у верхній правий кут — це термінальна область візуального сканування. Око закінчує траєкторію читання саме тут, що робить це місце найефективнішим для цільової дії.",
+              en: "The primary CTA button ('Wholesale Inquiry') is styled with high contrast and locked to the top-right corner. According to the Gutenberg Diagram reading sweep, this is the 'Terminal Area' where users finish scanning and act."
+            }
+          },
+          {
+            title: { ua: "Обмеження вибору (Магічне число Міллера)", en: "Miller's Law: Link Grouping" },
+            desc: {
+              ua: "Меню містить рівно 7 пунктів навігації. Обсяг короткочасної пам'яті людини може утримувати лише 7 ± 2 елементи. Більша кількість пунктів змусила б користувача вагатися, створюючи перешкоди для швидкого розуміння.",
+              en: "The navigation menu contains exactly 7 primary anchors. Under Miller's Law, short-term human memory processes a maximum of 7±2 structural links efficiently. Overcrowding links forces users into scanning paralysis."
+            }
+          }
+        ]
+      },
+      hero: {
+        badge: 2,
+        law: { ua: "F-Pattern / Hick's Law", en: "F-Pattern / Hick's Law" },
+        metric: { ua: "Конверсія CTR / Engagement", en: "Conversion CTR / Engagement" },
+        title: {
+          ua: "Героїчний блок (Hero Section)",
+          en: "Hero Banner (First Fold)"
+        },
+        points: [
+          {
+            title: { ua: "F-подібний патерн сканування сторінки", en: "F-Shaped Page Reading Pattern" },
+            desc: {
+              ua: "Заголовок 'ТОЧНІСТЬ ±1 ММ. ЗАВЖДИ.' і опис вирівняні по лівому краю. Користувачі сканують веборієнтований контент у формі літери F. Головне цільове повідомлення та кнопки заклику до дії потрапляють безпосередньо у зону найвищої уваги.",
+              en: "The bold headline ('ACCURACY ±1 MM. ALWAYS.') and body are strictly left-aligned. Web visitors trace layouts in an F-shaped path; positioning key copy and action triggers on the left margin ensures immediate capture."
+            }
+          },
+          {
+            title: { ua: "Закон Хіка: первинна та вторинна дія", en: "Hick's Law: Primary vs Secondary Action" },
+            desc: {
+              ua: "Ми пропонуємо всього дві чіткі кнопки дії: 'Розрахувати' (акцентна, веде на калькулятор) та 'Де купити' (контурна). Чим більше варіантів вибору надається людині, тим довше вона приймає рішення. Двох кнопок достатньо для розгалуження теплого та холодного трафіку.",
+              en: "Providing only two explicit options ('Calculate' as primary filled, 'Where to buy' as secondary outlined) respects Hick's Law. Minimizing initial options reduces the time required to choose and take action."
+            }
+          },
+          {
+            title: { ua: "Структурування довіри (Miller's Law)", en: "Trust Metrics Chunking (Miller's Law)" },
+            desc: {
+              ua: "Чотири ключові статистичні картки (550К м³, 15+ років, CE-сертифікат, 200+ дилерів) групують великі масиви соціальних доказів у зрозумілі інформаційні блоки. Вони розташовані знизу екрана і слугують плавним містком для подальшого прокручування.",
+              en: "The 4 key quantitative stats in the bottom row chunk credibility signals. Visualizing proof metrics (volumes, experience, standards, distribution) in a clean grid structures trust indicators into a digestible row."
+            }
+          }
+        ]
+      },
+      trust: {
+        badge: 3,
+        law: { ua: "Соціальний доказ / Authority Bias", en: "Social Proof / Authority Bias" },
+        metric: { ua: "Авторитет бренду", en: "Brand Authority" },
+        title: {
+          ua: "Рядок довіри (Trust Marquee)",
+          en: "Trust Bar / Logo & Spec Ticker"
+        },
+        points: [
+          {
+            title: { ua: "Ефект безперервної уваги без когнітивного шуму", en: "Continuous Engagement, Zero Noise" },
+            desc: {
+              ua: "Анімований рухомий рядок містить ключові стандарти (ISO 9001, CE, Masa GmbH). Динамічний рух привертає увагу периферійного зору, утримуючи інтерес до читання сайту без необхідності завантажувати інтерфейс статичними блоками.",
+              en: "The horizontal auto-marquee features certifications (Masa GmbH, CE, ISO) in a subtle, loop animation. It captures ambient peripheral sight and triggers authority bias without breaking vertical reading patterns."
+            }
+          }
+        ]
+      },
+      products: {
+        badge: 4,
+        law: { ua: "Закони Гештальту (Similarity & Proximity)", en: "Gestalt Principles of Grouping" },
+        metric: { ua: "Кліки по каталогу / CTR", en: "Catalog Clicks / CTR" },
+        title: {
+          ua: "Каталог продукції",
+          en: "Product Catalog"
+        },
+        points: [
+          {
+            title: { ua: "Закон схожості (Similarity)", en: "Gestalt Law of Similarity" },
+            desc: {
+              ua: "Картки товарів мають ідентичну сітку, розміщення елементів та колірні кодування характеристик. Користувачі сприймають схожі об'єкти як групу з однаковою функцією, що дозволяє їм порівнювати стінові та перегородкові блоки без повторного вивчення інтерфейсу кожної картки.",
+              en: "All three product cards share identical structures, fonts, and grid coordinates. Because human eyes group elements that share visual features (Similarity), comparing wall, partition, and U-blocks becomes instant."
+            }
+          },
+          {
+            title: { ua: "Зовнішній вигляд клікабельності (Affordance)", en: "Visual Affordance & Prominence" },
+            desc: {
+              ua: "Стрілки у кутках кожної картки (`↗`) та виділення рамкою активного продукту створюють чіткий натяк на взаємодію. Користувач підсвідомо розуміє, що картка є інтерактивною і клік по ній розкриє додаткові деталі.",
+              en: "Placing a discrete directional arrow ('↗') in each card header provides signposting (Affordance). It subconsciously signals to users that clicking the grid card triggers navigation to advanced details."
+            }
+          }
+        ]
+      },
+      sizes: {
+        badge: 5,
+        law: { ua: "Progressive Disclosure / Chunking", en: "Progressive Disclosure / Chunking" },
+        metric: { ua: "Когнітивне навантаження", en: "Cognitive Load" },
+        title: {
+          ua: "Розміри та таблиці характеристик",
+          en: "Technical Specifications Table"
+        },
+        points: [
+          {
+            title: { ua: "Поступове розкриття (Progressive Disclosure)", en: "Progressive Disclosure via Tabs" },
+            desc: {
+              ua: "Замість висипання гігантської таблиці на 30 рядків, яка б злякала пересічного забудовника, інтерфейс використовує вкладки (Стінові, Перегородкові, U-Block). Користувач бачить лише ту інформацію, яку він шукає в даний момент. Це зберігає чистоту інтерфейсу.",
+              en: "Instead of overwhelming users with a massive, multi-parameter 30-row grid, data is isolated into three logical tabs. Only the active context (Wall, Partition, U-Block) is loaded, keeping cognitive processing lightweight."
+            }
+          },
+          {
+            title: { ua: "Сканування таблиці: чергування ліній", en: "Z-Pattern & Table Scannability" },
+            desc: {
+              ua: "Специфікації вирівняні по центру і чітко розмежовані лініями. Око рухається зліва направо по горизонтальних напрямних, миттєво співвідносячи ширину блоку з кількістю на піддоні.",
+              en: "Grid parameters align to structured columns bounded by explicit horizontal gridlines. This helps eye movement slide horizontally across records, establishing relationships between width and density instantly."
+            }
+          }
+        ]
+      },
+      compare: {
+        badge: 6,
+        law: { ua: "Center-Stage Effect / Візуальний Якір", en: "Center-Stage Effect / Visual Anchoring" },
+        metric: { ua: "Вибір маржинального продукту", en: "Target Product Conversion" },
+        title: {
+          ua: "Порівняння марок D400 та D500",
+          en: "Grade Comparison Block"
+        },
+        points: [
+          {
+            title: { ua: "Ефект центральної сцени (Center-Stage)", en: "Center-Stage Positioning Strategy" },
+            desc: {
+              ua: "Картку 'D500' розташовано в центрі, виділено товстою контрастною рамкою та забезпечено бейджем 'Популярний'. Психологічно користувачі схильні обирати середній варіант з трьох запропонованих. Таке акцентування підштовхує клієнта до купівлі універсальної та міцнішої марки.",
+              en: "The middle card ('D500') is visually anchored using high-contrast borders and labeled 'Popular'. Human psychology naturally shifts toward central options in a layout, making this a powerful nudge tool."
+            }
+          },
+          {
+            title: { ua: "Зниження когнітивного навантаження", en: "Cognitive Load Balancing" },
+            desc: {
+              ua: "Характеристики обох марок зведені до простих паралельних рядків. Користувачеві не потрібно тримати в пам'яті цифри з попередніх секцій — порівняння відбувається на одному екрані.",
+              en: "Key performance criteria are mapped line-by-line horizontally. Users don't need to commit specs to working memory to compare items, accelerating decision-making."
+            }
+          }
+        ]
+      },
+      calc: {
+        badge: 7,
+        law: { ua: "Ефект естетики-юзабіліті / Зворотний зв'язок", en: "Aesthetic-Usability Effect / Feedback Loop" },
+        metric: { ua: "Генерація лідів / Time on Page", en: "Lead Quality / Time on Page" },
+        title: {
+          ua: "Інженерний онлайн-калькулятор",
+          en: "Engineering Calculator Widget"
+        },
+        points: [
+          {
+            title: { ua: "Ефект Естетики-Юзабіліті", en: "Aesthetic-Usability & Interactive Value" },
+            desc: {
+              ua: "Красиві, зручні калькулятори сприймаються користувачами як значно точніші та професійніші. Інтерактивні випадаючі списки та візуально відокремлена права панель з результатами створюють відчуття надійного інструменту для розрахунку будівництва.",
+              en: "Aesthetically polished custom widgets are perceived by users as inherently more accurate and reliable. Isolating inputs to the left and huge, bold readouts to the right delivers interactive balance."
+            }
+          },
+          {
+            title: { ua: "Миттєвий зворотний зв'язок (Feedback Loop)", en: "Real-time Feedback Loops" },
+            desc: {
+              ua: "Результат оновлюється автоматично без перезавантаження сторінки при зміні будь-якого поля. Користувач відразу бачить вплив товщини стіни чи наявності вікон на підсумковий тоннаж вантажівки. Це підвищує довіру та залученість.",
+              en: "The results display recalculates dynamically as inputs change, without frustrating page refreshes. Providing a continuous feedback loop reassures users and reduces friction during bulk estimation."
+            }
+          },
+          {
+            title: { ua: "Запобігання помилкам (Error Prevention)", en: "Proactive Error Safeguards" },
+            desc: {
+              ua: "Якщо сумарна площа вікон та дверей перевищує площу стін, калькулятор не видає абсурдні результати, а виводить помітний банер з помилкою. Це захищає користувача від хибних розрахунків.",
+              en: "If input opening fields (windows/doors) logically exceed physical wall volumes, the UI replaces data with an explicit warning banner, preventing user errors during calculations."
+            }
+          }
+        ]
+      },
+      b2b: {
+        badge: 8,
+        law: { ua: "Закон Фіттса / Зниження тертя форм", en: "Fitts's Law / Form Friction Minimization" },
+        metric: { ua: "Конверсія B2B запитів", en: "Conversion B2B Forms" },
+        title: {
+          ua: "B2B блок та Форма запиту",
+          en: "B2B Portal & Inquiry Form"
+        },
+        points: [
+          {
+            title: { ua: "Одноколонкова структура форми", en: "Single-Column Flow Form" },
+            desc: {
+              ua: "Форма спроектована строго в одну колонку. Згідно з дослідженнями юзабіліті форм, вертикальне сканування в одну лінію дозволяє заповнювати поля на 40% швидше та суттєво знижує кількість помилок.",
+              en: "The capture form layout flows in a strict, single-column line. Research shows linear, top-to-bottom entry speeds up form completion by 40% and reduces abandonment rates compared to multi-column formats."
+            }
+          },
+          {
+            title: { ua: "Мінімізація полів та інтерактивні підказки", en: "Inline Assistance & Minimal Fields" },
+            desc: {
+              ua: "Всього 3 текстових поля (Ім'я, Телефон, Проект). Чим менше полів — тим вища конверсія. Біля кожного поля розташована іконка знаку питання `?`, яка при наведенні показує приклад заповнення, нівелюючи страх помилки.",
+              en: "We prompt only 3 text inputs (Name, Phone, Project details) to maximize completion rates. Small, non-blocking hover tooltips ('?') resolve potential confusion on the fly."
+            }
+          },
+          {
+            title: { ua: "Закон Фіттса: помітність кнопки", en: "Fitts's Law: Giant Submit Target" },
+            desc: {
+              ua: "Кнопка 'Отримати пропозицію' займає всю ширину форми і має велику висоту. Цільові кнопки мають бути максимально доступними для клікання, особливо на мобільних пристроях, де великий палець повинен легко потрапити по кнопці без прицілювання.",
+              en: "The submit CTA expands to full-form width. According to Fitts's Law, target click speed and accuracy are functions of target size; making the button massive eliminates selection effort, especially on mobile touch screens."
+            }
+          }
+        ]
+      },
+      tech: {
+        badge: 9,
+        law: { ua: "Пряма дія / Довіра через прозорість", en: "Direct Action / Trust via Transparency" },
+        metric: { ua: "Завантаження CAD/BIM файлів", en: "CAD/BIM File Downloads" },
+        title: {
+          ua: "Технічний центр",
+          en: "Technical Center Hub"
+        },
+        points: [
+          {
+            title: { ua: "Конверсія без бар'єрів (Без реєстрації)", en: "Zero-Barrier Resource Acquisition" },
+            desc: {
+              ua: "BIM-моделі та сертифікати доступні для завантаження в один клік без примусової реєстрації чи збору e-mail адрес. Усунення цього проміжного кроку підвищує лояльність архітекторів та проектувальників, які інтегрують UDK у свої креслення.",
+              en: "BIM libraries and EU quality declarations download in a single click with zero registration barriers. Eliminating email gates builds goodwill and accelerates product specification by commercial architects."
+            }
+          },
+          {
+            title: { ua: "Контекстні селектори", en: "Context-Aware Action Skeletons" },
+            desc: {
+              ua: "Користувач спочатку обирає марку (D400 чи D500), після чого розблоковується вибір товщини блоку. Це запобігає завантаженню помилкових документів, яких не існує в природі.",
+              en: "A dynamic dependent selection workflow prompts the user to select block density first, before unlocking size selections. This eliminates user confusion and invalid document requests."
+            }
+          }
+        ]
+      },
+      process: {
+        badge: 10,
+        law: { ua: "Goal-Gradient Effect / Хронологічний наратив", en: "Goal-Gradient Effect / Chronological Narrative" },
+        metric: { ua: "Глибина прокрутки / Scroll Depth", en: "Scroll Depth / Dwell Time" },
+        title: {
+          ua: "Таймлайн виробничого циклу",
+          en: "Production Process Timeline"
+        },
+        points: [
+          {
+            title: { ua: "Ефект градієнта мети (Goal-Gradient)", en: "Goal-Gradient Visual Feedback" },
+            desc: {
+              ua: "Візуалізація кроків (01–06) з анімованою лінією прогресу показує користувачеві шлях виробництва продукту. Наочне представлення етапів створює мотивацію прокрутити блок до кінця, підвищуючи залученість і час перебування на сайті.",
+              en: "Charting the manufacturing process across numbered steps (01-06) leverages the Goal-Gradient Effect. Users are motivated to scroll and read to complete the narrative journey."
+            }
+          },
+          {
+            title: { ua: "Емоційне підкріплення через емодзі", en: "Visual Anchoring via Emojis" },
+            desc: {
+              ua: "Кожен етап має асоціативний символ (🪨, ⚙️, 🔪, 🔥, 🔬, 🚛). Це дозволяє миттєво зчитати суть процесу навіть при швидкому скролінгу без вчитування в тексти.",
+              en: "Deploying standardized visual markers (emojis) for each process node serves as a rapid conceptual anchor, supporting fast scanning without text fatigue."
+            }
+          }
+        ]
+      },
+      dealers: {
+        badge: 11,
+        law: { ua: "High-Performance UX / Чіткі орієнтири", en: "High-Performance UX / Clear Direction" },
+        metric: { ua: "Кліки на зовнішню карту", en: "External Map CTR" },
+        title: {
+          ua: "Блок дилерів та Карта",
+          en: "Dealers Directory & Map"
+        },
+        points: [
+          {
+            title: { ua: "Performance UX: відкладене завантаження карти", en: "Performance UX: Interactive Map Placeholder" },
+            desc: {
+              ua: "Масивна інтерактивна карта Google не вантажиться відразу — замість неї виводиться легка заглушка. Справжня карта завантажується лише за кліком або при появі у полі зору. Це зберігає швидкість завантаження сайту, захищаючи мобільних користувачів від зависань.",
+              en: "Heavy third-party maps are replaced by a lightweight wireframe mockup, loading the real frame only upon hover/click. This saves initial load times, ensuring smooth performance on mobile networks."
+            }
+          },
+          {
+            title: { ua: "Чіткі орієнтири дистрибуції", en: "Direct Conversion Signposts" },
+            desc: {
+              ua: "Поруч із картою виведена коротка статистика точок продажу у ключових містах (Дніпро, Київ тощо) та велика кнопка для переходу на Google Maps. Ми одразу даємо відповідь на питання 'Де купити?', мінімізуючи шлях користувача.",
+              en: "Listing regional point summaries directly alongside the map immediately satisfies queries about geographic availability, driving high click-through rates to localized navigation."
+            }
+          }
+        ]
+      },
+      faq: {
+        badge: 12,
+        law: { ua: "Progressive Disclosure / Структурований FAQ", en: "Progressive Disclosure / Structured FAQ" },
+        metric: { ua: "Пошуковий трафік (SEO Rich Snippets)", en: "Organic SEO Snippet Clicks" },
+        title: {
+          ua: "Часті питання (FAQ Accordion)",
+          en: "FAQ Accordion Section"
+        },
+        points: [
+          {
+            title: { ua: "Поступове розкриття деталей (Accordion)", en: "Accordion-driven Information Architecture" },
+            desc: {
+              ua: "Усі відповіді приховані за замовчуванням під плашками з плюсами `+`. Користувач бачить лише запитання і самостійно розкриває потрібні теми. Це економить понад 500 пікселів вертикальної висоти сторінки і запобігає перенасиченню інтерфейсу текстом.",
+              en: "Hiding answers inside accordion rows keeps the layout tidy, saving over 500px of vertical viewport space while letting users easily skim for relevant headings."
+            }
+          },
+          {
+            title: { ua: "SEO оптимізація через мікророзмітку", en: "Schema.org Technical Integration" },
+            desc: {
+              ua: "Блок технічно розмічений схемою `FAQPage`. Це дозволяє пошуковим ботам Google зчитувати запитання та відповіді безпосередньо і виводити їх у результатах пошуку як розширені сніпети, підвищуючи клікабельність бренду в органічній видачі.",
+              en: "This block utilizes search-engine optimized Schema.org syntax. Search crawlers parse this structure to render rich search results directly on Google search result lists, driving high-intent organic traffic."
+            }
+          }
+        ]
+      },
+      footer: {
+        badge: 13,
+        law: { ua: "Safety Net Usability / Зручність виходу", en: "Safety Net Usability / Visual Grids" },
+        metric: { ua: "Зниження розгубленості", en: "User Retention" },
+        title: {
+          ua: "Підвал сайту (Footer)",
+          en: "Footer Navigation Area"
+        },
+        points: [
+          {
+            title: { ua: "Підвал як 'Рятувальна сітка'", en: "Footer as a Safety Net" },
+            desc: {
+              ua: "Якщо користувач догортав сторінку до самого кінця і не скористався жодною кнопкою конверсії, підвал виступає як захисний бар'єр. Тут дублюються всі контакти (клікабельні телефон, e-mail, адреса) та посилання на важливі сертифікати, запобігаючи закриттю вкладки.",
+              en: "When visitors scroll to the absolute bottom without taking action, the footer acts as a conversion safety net, duplicating critical actions (phone, email, documents) to prevent immediate tab closing."
+            }
+          },
+          {
+            title: { ua: "Дотримання авторського права та стандартів", en: "Corporate Legal Compliance" },
+            desc: {
+              ua: "Наявність копірайту, року заснування (2010–2026) та юридичної назви ТОВ підвищує рівень довіри B2B аудиторії та великих забудовників до бренду.",
+              en: "Legally compliant copyright blocks, LLC registrations, and clean standard links reaffirm business legitimacy, reinforcing trust with commercial procurement officers."
+            }
+          }
+        ]
+      },
+      chat: {
+        badge: "💬",
+        law: { ua: "Реактивна підтримка", en: "Reactive Assistance" },
+        metric: { ua: "Зменшення відтоку користувачів", en: "Direct Conversion Rates" },
+        title: {
+          ua: "Чат-віджет та Консультація",
+          en: "Interactive Chat Widget Skeleton"
+        },
+        points: [
+          {
+            title: { ua: "Запобігання розгубленості в один клік", en: "Instant Resolution Target" },
+            desc: {
+              ua: "Плаваючий чат знаходиться в нижній правій частині екрана. Це зона швидкого доступу для великого пальця на мобільних пристроях. Наявність швидких кнопок допомагає почати діалог без введення тексту.",
+              en: "The floating widget sits at the bottom-right corner, in the primary mobile thumb-zone. Quick-reply suggestions ('Which grade to buy?', 'BIM Files') encourage interaction without requiring text input."
+            }
+          }
+        ]
+      },
+      cookie: {
+        badge: "🍪",
+        law: { ua: "Конфіденційність та законність", en: "Compliance UX" },
+        metric: { ua: "Юридична чистота / GDPR", en: "GDPR Consent Rates" },
+        title: {
+          ua: "Банер згоди на збереження даних у кеші",
+          en: "Data Caching & Consent Banner"
+        },
+        points: [
+          {
+            title: { ua: "Прозорість використання локального кешу", en: "Transparent Offline Performance Benefits" },
+            desc: {
+              ua: "Банер пояснює користувачеві переваги збереження даних (швидке повторне завантаження, робота в офлайні). Це підвищує відсоток згоди на кешування, що покращує показники утримання користувачів.",
+              en: "This notification panel requests explicit caching consent, explaining caching benefits like fast offline loads and zero network delays, ensuring compliance with local digital laws."
+            }
+          }
+        ]
+      }
+    };
+
+    // ─── VIEWER STATE MANAGEMENT ───────────────────────────────
+    let currentViewport = 'desktop';
+    let currentLang = 'ua';
+    let activeBlockId = null;
+    let activeDrawerTab = 'analysis';
+
+    // Set Viewport Resizer
+    function setViewport(device) {
+      currentViewport = device;
+      
+      // Update active control button
+      document.querySelectorAll('.control-group button').forEach(btn => {
+        if(btn.id && btn.id.includes('btn-' + device)) {
+          btn.classList.add('active');
+        } else if (btn.id && (btn.id.includes('desktop') || btn.id.includes('tablet') || btn.id.includes('mobile'))) {
+          btn.classList.remove('active');
+        }
+      });
+
+      const container = document.getElementById('wireframe-container');
+      container.className = 'device-container';
+      if (device === 'tablet') {
+        container.classList.add('device-tablet');
+      } else if (device === 'mobile') {
+        container.classList.add('device-mobile');
+      }
+    }
+
+    // Toggle Badges Overlay View
+    function toggleBadgesOverlay() {
+      const isChecked = document.getElementById('badges-toggle').checked;
+      const body = document.body;
+      if (isChecked) {
+        body.classList.add('show-badges');
+      } else {
+        body.classList.remove('show-badges');
+      }
+    }
+
+    // Change translation language
+    function setLang(lang) {
+      currentLang = lang;
+      document.getElementById('btn-lang-ua').classList.toggle('active', lang === 'ua');
+      document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+      
+      // Re-render sidebar if block is active
+      if (activeBlockId) {
+        renderSidebarContent(activeBlockId);
+      }
+    }
+
+    // Drawer tab switching
+    function switchDrawerTab(tab) {
+      activeDrawerTab = tab;
+      document.getElementById('tab-analysis-btn').classList.toggle('active', tab === 'analysis');
+      document.getElementById('tab-laws-btn').classList.toggle('active', tab === 'laws');
+      
+      if (activeBlockId) {
+        renderSidebarContent(activeBlockId);
+      }
+    }
+
+    // Interactive Inspections when clicking wireframe elements
+    function inspectBlock(blockId) {
+      activeBlockId = blockId;
+      
+      // Highlight element on wireframe
+      document.querySelectorAll('.wf-section').forEach(sec => {
+        sec.classList.remove('highlighted');
+      });
+      document.getElementById('wf-' + blockId).classList.add('highlighted');
+      
+      // Render details in drawer
+      renderSidebarContent(blockId);
+      
+      // Auto scroll container slightly if needed
+      document.getElementById('wf-' + blockId).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Build html for sidebar dynamically based on dataset
+    function renderSidebarContent(blockId) {
+      const data = dataset[blockId];
+      if (!data) return;
+
+      document.getElementById('intro-view').style.display = 'none';
+      document.getElementById('content-view').style.display = 'block';
+
+      // Set Header and Badge number
+      document.getElementById('drawer-title').innerHTML = `<span>⚙️</span> ${data.title[currentLang]}`;
+      const badge = document.getElementById('active-badge');
+      badge.style.display = 'inline-flex';
+      badge.innerText = data.badge;
+
+      // Set Meta Tags
+      document.getElementById('meta-ux-law').innerText = data.law[currentLang];
+      document.getElementById('meta-ux-metric').innerText = data.metric[currentLang];
+
+      const container = document.getElementById('justifications-container');
+      container.innerHTML = '';
+
+      if (activeDrawerTab === 'analysis') {
+        // Detailed block mapping layout justifications
+        data.points.forEach(point => {
+          const card = document.createElement('div');
+          card.className = 'justification-card';
+          card.innerHTML = `
+            <h3>📌 ${point.title[currentLang]}</h3>
+            <p>${point.desc[currentLang]}</p>
+          `;
+          container.appendChild(card);
+        });
+      } else {
+        // Detailed academic UX law mapping
+        const lawCard = document.createElement('div');
+        lawCard.className = 'justification-card';
+        lawCard.innerHTML = `
+          <h3>⚖️ ${data.law[currentLang]}</h3>
+          <p style="margin-bottom: 12px">
+            ${currentLang === 'ua' 
+              ? `Ця секція розміщена та структурована відповідно до наукових принципів юзабіліті для мінімізації психологічного тертя користувача при взаємодії з промисловим сайтом.`
+              : `This section is structured scientifically based on interaction ergonomics, lowering user visual search effort when consuming information grids.`
+            }
+          </p>
+          <span class="law-badge">${data.law[currentLang]}</span>
+          <span class="metric-badge">${data.metric[currentLang]}</span>
+        `;
+        container.appendChild(lawCard);
+      }
+    }
+  </script>
+</body>
+</html>

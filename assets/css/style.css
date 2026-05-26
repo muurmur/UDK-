@@ -2808,3 +2808,535 @@
       }
     }
 
+    /* ── ТЕПЛОФІЗИЧНИЙ СИМУЛЯТОР СТІНИ (НОВИЙ РОЗДІЛ) ─────────────────── */
+    .physics-wrap {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 40px;
+      margin-top: 48px;
+    }
+
+    .physics-form {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-border);
+      padding: 32px;
+      border-radius: 4px;
+    }
+
+    .physics-result {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-border);
+      padding: 32px;
+      border-radius: 4px;
+    }
+
+    /* Стилізація Range Sliders */
+    .physics-range {
+      width: 100%;
+      height: 6px;
+      background: var(--color-surface-3);
+      outline: none;
+      -webkit-appearance: none;
+      border-radius: 3px;
+      margin: 10px 0 4px;
+      border: 1px solid var(--color-border-mid);
+    }
+
+    .physics-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: var(--color-accent);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(234, 175, 16, 0.4);
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+
+    .physics-range::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      background: #fff;
+    }
+
+    .physics-slider-val {
+      font-size: 13px;
+      font-family: monospace;
+      font-weight: 700;
+      color: var(--color-accent);
+      background: var(--color-surface-3);
+      padding: 2px 8px;
+      border-radius: 3px;
+      border: 1px solid var(--color-border);
+    }
+
+    .physics-ticks {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 4px;
+      font-size: 9px;
+      font-family: monospace;
+      color: var(--color-text-hint);
+    }
+
+    /* Мета-рядки результатів */
+    .physics-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 18px;
+    }
+
+    .physics-meta-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--color-text-hint);
+      margin-bottom: 6px;
+    }
+
+    .physics-meta-big {
+      font-size: 40px;
+      font-weight: 900;
+      font-family: monospace;
+      color: var(--color-text-primary);
+      line-height: 1;
+    }
+
+    .physics-meta-unit {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      margin-top: 4px;
+      font-family: monospace;
+    }
+
+    /* ДБН Бейджі */
+    .physics-dbn-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      padding: 6px 12px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      transition: all var(--transition-base);
+    }
+
+    .physics-dbn-badge--pass {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #10b981;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.08);
+    }
+
+    .physics-dbn-badge--fail {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #ef4444;
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.08);
+    }
+
+    .physics-meta-hint {
+      font-size: 10px;
+      color: var(--color-text-hint);
+      margin-top: 6px;
+    }
+
+    /* Контейнер Canvas */
+    .physics-canvas-container {
+      background: #09090b;
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+      padding: 16px;
+      position: relative;
+    }
+
+    #physics-canvas {
+      width: 100%;
+      height: 180px;
+      display: block;
+    }
+
+    .physics-canvas-legend {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 10px;
+      font-family: monospace;
+      color: var(--color-text-hint);
+      border-top: 1px dashed var(--color-border);
+      padding-top: 6px;
+    }
+
+    /* Вікно попередження точки роси */
+    .physics-warning-box {
+      border: 1px solid var(--color-border);
+      padding: 14px 16px;
+      border-radius: 4px;
+      transition: all var(--transition-base);
+      line-height: 1.5;
+    }
+
+    .physics-warning-box--safe {
+      border-left: 3px solid #10b981;
+      background: rgba(16, 185, 129, 0.04);
+    }
+
+    .physics-warning-box--warning {
+      border-left: 3px solid #ef4444;
+      background: rgba(239, 68, 68, 0.04);
+      animation: alert-blink 2s infinite;
+    }
+
+    .physics-warning-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--color-text-primary);
+      margin-bottom: 4px;
+    }
+
+    .physics-warning-desc {
+      font-size: 11px;
+      color: var(--color-text-muted);
+    }
+
+    @keyframes alert-blink {
+      0%, 100% { border-color: #ef4444; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+      50%      { border-color: rgba(239, 68, 68, 0.3); box-shadow: 0 0 8px rgba(239, 68, 68, 0.08); }
+    }
+
+    @media (max-width: 900px) {
+      .physics-wrap {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+    }
+
+    /* ─── ІНТЕРАКТИВНЕ МОДАЛЬНЕ ВІКНО 3D ─────────────────────────── */
+    .block-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 10005;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+
+    .block-modal--open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .block-modal__container {
+      width: 90%;
+      max-width: 860px;
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid var(--color-accent-border);
+      border-radius: 4px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+      position: relative;
+      overflow: hidden;
+      animation: modal-zoom-in 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+    }
+
+    @keyframes modal-zoom-in {
+      from { transform: scale(0.92); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    .block-modal__close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: none;
+      border: none;
+      color: var(--color-text-hint);
+      font-size: 28px;
+      cursor: pointer;
+      line-height: 1;
+      z-index: 10;
+      transition: color var(--transition-base);
+    }
+
+    .block-modal__close:hover {
+      color: var(--color-text-primary);
+    }
+
+    .block-modal__body {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      min-height: 480px;
+    }
+
+    /* Ліва панель: 3D Сцена */
+    .block-modal__visual-pane {
+      background: #09090b;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-right: 1px solid var(--color-border);
+      position: relative;
+    }
+
+    .block-modal__3d-title {
+      font-size: 10px;
+      font-family: monospace;
+      color: var(--color-text-hint);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .scene-3d-container {
+      width: 100%;
+      height: 220px;
+      background: #0d0d0f;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      perspective: 1000px;
+      user-select: none;
+      cursor: grab;
+      margin: 20px 0;
+      overflow: visible;
+    }
+
+    .scene-3d-container:active {
+      cursor: grabbing;
+    }
+
+    /* CSS 3D Блок кубоїд */
+    .cuboid-3d {
+      position: relative;
+      width: 160px;
+      height: 53px; /* висота 200мм пропорційно довжині 600мм */
+      transform-style: preserve-3d;
+      transform: rotateX(-22deg) rotateY(42deg);
+      --depth: 100px; /* динамічно міняється з JS */
+    }
+
+    .face-3d {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      font-family: monospace;
+      color: rgba(255, 255, 255, 0.08);
+      letter-spacing: 1px;
+      border: 1.5px solid var(--color-accent-border);
+      backface-visibility: visible;
+    }
+
+    .face-3d--front {
+      width: 160px;
+      height: 53px;
+      transform: translateZ(calc(var(--depth) / 2));
+      background: rgba(30, 41, 59, 0.85);
+      box-shadow: inset 0 0 20px rgba(234, 175, 16, 0.05);
+    }
+
+    .face-3d--back {
+      width: 160px;
+      height: 53px;
+      transform: rotateY(180deg) translateZ(calc(var(--depth) / 2));
+      background: rgba(30, 41, 59, 0.85);
+    }
+
+    .face-3d--left {
+      width: var(--depth);
+      height: 53px;
+      left: calc(50% - var(--depth) / 2);
+      transform: rotateY(-90deg) translateZ(80px);
+      background: rgba(20, 20, 23, 0.95);
+    }
+
+    .face-3d--right {
+      width: var(--depth);
+      height: 53px;
+      left: calc(50% - var(--depth) / 2);
+      transform: rotateY(90deg) translateZ(80px);
+      background: rgba(20, 20, 23, 0.95);
+    }
+
+    .face-3d--top {
+      width: 160px;
+      height: var(--depth);
+      top: calc(50% - var(--depth) / 2);
+      transform: rotateX(90deg) translateZ(26.5px);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .face-3d--bottom {
+      width: 160px;
+      height: var(--depth);
+      top: calc(50% - var(--depth) / 2);
+      transform: rotateX(-90deg) translateZ(26.5px);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    /* 3D Розмірні лінії */
+    .dim-label-3d {
+      position: absolute;
+      font-size: 9px;
+      font-family: monospace;
+      color: var(--color-accent);
+      background: #09090b;
+      border: 1px solid rgba(234, 175, 16, 0.25);
+      padding: 1px 4px;
+      border-radius: 2px;
+      pointer-events: none;
+    }
+
+    .dim-label-3d--length {
+      bottom: 24px;
+      left: calc(50% - 25px);
+    }
+
+    .dim-label-3d--height {
+      right: 28px;
+      top: calc(50% - 7px);
+    }
+
+    .dim-label-3d--depth {
+      left: 28px;
+      top: calc(50% - 7px);
+    }
+
+    .modal-thickness-selector {
+      font-size: 12px;
+      color: var(--color-text-muted);
+    }
+
+    /* Права панель: Інфо */
+    .block-modal__content-pane {
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 16px;
+    }
+
+    .block-modal__eyebrow {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: var(--color-accent);
+      text-transform: uppercase;
+    }
+
+    .block-modal__title {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--color-text-primary);
+      line-height: 1.2;
+    }
+
+    .block-modal__desc {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--color-text-muted);
+    }
+
+    /* ─── ПОКРАЩЕННЯ ЧАТ-БОТА (МАСШТАБОВАНІСТЬ ТА РЕЗЕТ) ───────────── */
+    .chat-popup {
+      min-width: 280px;
+      min-height: 380px;
+      max-width: 90vw;
+      max-height: 85vh;
+      width: 320px;
+      height: 440px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      resize: both; /* native resize fallback */
+    }
+
+    .chat-popup__resize-handle {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 14px;
+      height: 14px;
+      cursor: nwse-resize;
+      z-index: 210;
+      border-top: 1.5px solid rgba(255, 255, 255, 0.2);
+      border-left: 1.5px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .chat-popup__resize-handle::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 4px;
+      height: 4px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      border-left: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .chat-popup__messages {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .chat-popup__quick {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 14px;
+      background: var(--color-surface-3);
+      border-top: 1px solid var(--color-border);
+      flex-shrink: 0;
+    }
+
+    .chat-quick-btn--reset {
+      background: var(--color-surface-4) !important;
+      border: 1px solid var(--color-accent-border) !important;
+      color: var(--color-accent) !important;
+      font-weight: 700;
+      opacity: 0.85;
+    }
+
+    .chat-quick-btn--reset:hover {
+      opacity: 1;
+      background: var(--color-accent) !important;
+      color: #000 !important;
+    }
+
+    @media (max-width: 768px) {
+      .block-modal__body {
+        grid-template-columns: 1fr;
+      }
+      .block-modal__visual-pane {
+        border-right: none;
+        border-bottom: 1px solid var(--color-border);
+        padding: 24px;
+      }
+      .block-modal__content-pane {
+        padding: 24px;
+      }
+      .scene-3d-container {
+        height: 180px;
+      }
+    }
+
+
+

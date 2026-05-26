@@ -92,6 +92,7 @@
       <li><a href="#products" class="nav__link" data-lang-ua="Продукція" data-lang-en="Products">Продукція</a></li>
       <li><a href="#sizes" class="nav__link" data-lang-ua="Розміри" data-lang-en="Sizes">Розміри</a></li>
       <li><a href="#compare" class="nav__link" data-lang-ua="D400/D500" data-lang-en="D400/D500">D400/D500</a></li>
+      <li><a href="#physics" class="nav__link" data-lang-ua="Теплофізика" data-lang-en="Physics">Теплофізика</a></li>
       <li><a href="#calc" class="nav__link" data-lang-ua="Калькулятор" data-lang-en="Calculator">Калькулятор</a></li>
       <li><a href="#tech" class="nav__link" data-lang-ua="Документи" data-lang-en="Documents">Документи</a></li>
       <li><a href="#dealers" class="nav__link" data-lang-ua="Де купити" data-lang-en="Where to buy">Де купити</a></li>
@@ -113,6 +114,7 @@
     <a href="#products" class="mobile-menu__link" data-lang-ua="Продукція" data-lang-en="Products">Продукція</a>
     <a href="#sizes" class="mobile-menu__link" data-lang-ua="Розміри" data-lang-en="Sizes">Розміри</a>
     <a href="#compare" class="mobile-menu__link" data-lang-ua="D400 / D500" data-lang-en="D400 / D500">D400 / D500</a>
+    <a href="#physics" class="mobile-menu__link" data-lang-ua="Теплофізика" data-lang-en="Physics">Теплофізика</a>
     <a href="#calc" class="mobile-menu__link" data-lang-ua="Калькулятор" data-lang-en="Calculator">Калькулятор</a>
     <a href="#tech" class="mobile-menu__link" data-lang-ua="Документи та BIM" data-lang-en="Documents & BIM">Документи та BIM</a>
     <a href="#dealers" class="mobile-menu__link" data-lang-ua="Де купити" data-lang-en="Where to buy">Де купити</a>
@@ -495,6 +497,112 @@
             class="compare-card__row-val" data-lang-ua="Не потрібна" data-lang-en="Not required">Не потрібна</span></div>
         <div class="compare-card__use" data-lang-ua="<strong>Підходить для</strong>Перемички над вікнами та дверима, армовані пояси і балки." data-lang-en="<strong>Suitable for</strong>Lintels over windows and doors, reinforced belts and beams."><strong>Підходить для</strong>Перемички над вікнами та дверима, армовані пояси і
           балки.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- SECTION: PHYSICS SIMULATOR                 -->
+  <!-- ========================================== -->
+  <section class="section" id="physics">
+    <div class="reveal">
+      <div class="section__label" data-lang-ua="Теплофізика" data-lang-en="Thermal Physics">Теплофізика</div>
+      <h2 class="section__title" data-lang-ua="Теплофізичний <em>симулятор</em> стіни" data-lang-en="Thermal <em>Simulator</em> of Wall">Теплофізичний <em>симулятор</em> стіни</h2>
+      <p class="section__desc" data-lang-ua="Розрахунок термічного опору стіни R та онлайн-візуалізація точки роси за ДБН В.2.6-31:2016." data-lang-en="Calculation of wall thermal resistance R and online dew point visualization according to DBN V.2.6-31:2016.">Розрахунок термічного опору стіни R та онлайн-візуалізація точки роси за ДБН В.2.6-31:2016.</p>
+    </div>
+
+    <div class="physics-wrap reveal">
+      <!-- ── Ліва панель: Управління параметрами стіни ── -->
+      <div class="physics-form">
+        <div class="form-field">
+          <label data-lang-ua="Марка щільності UDK" data-lang-en="UDK Block Density Grade">Марка щільності UDK</label>
+          <select class="form-select" id="sim-grade">
+            <option value="400" selected data-lang-ua="D400 (Теплоізоляційний · λ = 0.10 Вт/мК)" data-lang-en="D400 (Heat-insulating · λ = 0.10 W/mK)">D400 (Теплоізоляційний · λ = 0.10 Вт/мК)</option>
+            <option value="500" data-lang-ua="D500 (Конструкційний · λ = 0.12 Вт/мК)" data-lang-en="D500 (Structural · λ = 0.12 W/mK)">D500 (Конструкційний · λ = 0.12 Вт/мК)</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+            <label style="margin-bottom:0" data-lang-ua="Товщина блоку UDK" data-lang-en="UDK Block Thickness">Товщина блоку UDK</label>
+            <span class="physics-slider-val" id="sim-thickness-val">375 мм</span>
+          </div>
+          <input class="physics-range" type="range" id="sim-thickness" min="200" max="400" step="25" value="375">
+          <div class="physics-ticks">
+            <span>200</span>
+            <span>250</span>
+            <span>300</span>
+            <span>375</span>
+            <span>400</span>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label data-lang-ua="Матеріал додаткового утеплення" data-lang-en="Additional Insulation Material">Матеріал додаткового утеплення</label>
+          <select class="form-select" id="sim-insulation-type">
+            <option value="none" selected data-lang-ua="Без утеплення (Одношарова стіна)" data-lang-en="No insulation (Single-layer wall)">Без утеплення (Одношарова стіна)</option>
+            <option value="wool" data-lang-ua="Мінеральна вата (λ = 0.040 Вт/мК)" data-lang-en="Mineral Wool (λ = 0.040 W/mK)">Мінеральна вата (λ = 0.040 W/mK)</option>
+            <option value="polystyrene" data-lang-ua="Пінополістирол (λ = 0.038 Вт/мК)" data-lang-en="Polystyrene (λ = 0.038 W/mK)">Пінополістирол (λ = 0.038 W/mK)</option>
+          </select>
+        </div>
+
+        <div class="form-field" id="sim-insulation-wrap" style="display:none">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+            <label style="margin-bottom:0" data-lang-ua="Товщина утеплювача" data-lang-en="Insulation Thickness">Товщина утеплювача</label>
+            <span class="physics-slider-val" id="sim-insulation-val">100 мм</span>
+          </div>
+          <input class="physics-range" type="range" id="sim-insulation" min="50" max="150" step="50" value="100">
+          <div class="physics-ticks">
+            <span>50 мм</span>
+            <span>100 мм</span>
+            <span>150 мм</span>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+            <label style="margin-bottom:0" data-lang-ua="Зовнішня температура повітря" data-lang-en="Outside Air Temperature">Зовнішня температура повітря</label>
+            <span class="physics-slider-val" id="sim-temp-val">-20 °C</span>
+          </div>
+          <input class="physics-range" type="range" id="sim-temp" min="-20" max="10" step="5" value="-20">
+          <div class="physics-ticks">
+            <span>-20°C</span>
+            <span>-10°C</span>
+            <span>0°C</span>
+            <span>+10°C</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Права панель: Графік, Розрахунки та ДБН-барометр ── -->
+      <div class="physics-result">
+        <div class="physics-meta-row">
+          <div>
+            <div class="physics-meta-label" data-lang-ua="Опір теплопередачі R" data-lang-en="Thermal Resistance R">Опір теплопередачі R</div>
+            <div class="physics-meta-big" id="sim-r-value">3.91</div>
+            <div class="physics-meta-unit">м²·К/Вт</div>
+          </div>
+          <div style="text-align: right">
+            <div class="physics-meta-label" data-lang-ua="Стандарт ДБН (Зона 1)" data-lang-en="DBN Standard (Zone 1)">Стандарт ДБН (Зона 1)</div>
+            <div class="physics-dbn-badge" id="sim-dbn-badge">ВІДПОВІДАЄ ДБН ✅</div>
+            <div class="physics-meta-hint" data-lang-ua="Необхідно R ≥ 3.3 м²·К/Вт" data-lang-en="Required R ≥ 3.3 m²·K/W">Необхідно R ≥ 3.3 м²·К/Вт</div>
+          </div>
+        </div>
+
+        <!-- Canvas для малювання розрізу стіни та градієнта -->
+        <div class="physics-canvas-container">
+          <canvas id="physics-canvas"></canvas>
+          <div class="physics-canvas-legend">
+            <span data-lang-ua="Всередині (+20°C)" data-lang-en="Inside (+20°C)">Всередині (+20°C)</span>
+            <span id="legend-outside-temp" style="float:right">-20°C</span>
+          </div>
+        </div>
+
+        <!-- Сповіщення про точку роси -->
+        <div class="physics-warning-box" id="sim-warning-box">
+          <div class="physics-warning-title" id="sim-warning-title">✅ Конденсат безпечний (всередині матеріалу)</div>
+          <div class="physics-warning-desc" id="sim-warning-desc">Точка роси знаходиться глибоко в товщі стіни, конденсат на внутрішній поверхні виключений.</div>
+        </div>
       </div>
     </div>
   </section>
@@ -1097,21 +1205,23 @@
   <!-- CHAT WIDGET -->
   <div class="chat-widget">
     <div class="chat-popup" id="chat-popup">
+      <div class="chat-popup__resize-handle" id="chat-resize-handle"></div>
       <div class="chat-popup__header">
         <div class="chat-popup__status-dot"></div>
-        <span>UDK онлайн</span>
-        <small>Зараз онлайн</small>
+        <span data-lang-ua="UDK онлайн" data-lang-en="UDK Online">UDK онлайн</span>
+        <small data-lang-ua="Зараз онлайн" data-lang-en="Active now">Зараз онлайн</small>
       </div>
       <div class="chat-popup__messages" id="chat-messages">
-        <div class="chat-message chat-message--bot">Вітаємо! Допоможу підібрати блоки або знайти дилера.</div>
+        <div class="chat-message chat-message--bot" data-lang-ua="Вітаємо! Допоможу підібрати блоки або знайти дилера." data-lang-en="Welcome! I can help you select blocks or find a dealer.">Вітаємо! Допоможу підібрати блоки або знайти дилера.</div>
       </div>
       <div class="chat-popup__quick" id="chat-quick">
-        <button class="chat-quick-btn" data-question="Яку марку обрати?">Яку марку обрати?</button>
-        <button class="chat-quick-btn" data-question="Знайти дилера">Знайти дилера</button>
-        <button class="chat-quick-btn" data-question="BIM-моделі">BIM-моделі</button>
+        <button class="chat-quick-btn" data-question="Яку марку обрати?" data-lang-ua="Яку марку обрати?" data-lang-en="Which grade to choose?">Яку марку обрати?</button>
+        <button class="chat-quick-btn" data-question="Знайти дилера" data-lang-ua="Знайти дилера" data-lang-en="Find a dealer">Знайти дилера</button>
+        <button class="chat-quick-btn" data-question="BIM-моделі" data-lang-ua="BIM-моделі" data-lang-en="BIM Models">BIM-моделі</button>
+        <button class="chat-quick-btn chat-quick-btn--reset" id="chat-reset-btn" style="display:none" data-lang-ua="↩ До головного меню" data-lang-en="↩ Back to Menu">↩ До головного меню</button>
       </div>
       <div class="chat-popup__input-row">
-        <input class="chat-popup__input" type="text" placeholder="Написати..." id="chat-input">
+        <input class="chat-popup__input" type="text" placeholder="Написати..." id="chat-input" data-lang-ua="Написати..." data-lang-en="Type a message...">
         <button class="chat-popup__send" id="chat-send">↑</button>
       </div>
     </div>
@@ -1138,6 +1248,79 @@
 
   <!-- ── ЗГОДА НА КЕШУВАННЯ ────────────────────────────── -->
   
+
+  <!-- ========================================== -->
+  <!-- MODAL: INTERACTIVE 3D PRODUCT VIEWPORT     -->
+  <!-- ========================================== -->
+  <div class="block-modal" id="product-modal">
+    <div class="block-modal__container">
+      <button class="block-modal__close" id="modal-close" aria-label="Закрити">×</button>
+      
+      <div class="block-modal__body">
+        <!-- ── Ліва колонка: CSS 3D Візуалізатор ── -->
+        <div class="block-modal__visual-pane">
+          <div class="block-modal__3d-title" data-lang-ua="🛞 Затисніть та обертайте блок мишкою" data-lang-en="🛞 Drag mouse to rotate block in 3D">🛞 Затисніть та обертайте блок мишкою</div>
+          
+          <!-- Контейнер для CSS 3D сцени -->
+          <div class="scene-3d-container" id="scene-3d-box">
+            <div class="cuboid-3d" id="block-cuboid">
+              <div class="face-3d face-3d--front">UDK</div>
+              <div class="face-3d face-3d--back">UDK</div>
+              <div class="face-3d face-3d--left"></div>
+              <div class="face-3d face-3d--right"></div>
+              <div class="face-3d face-3d--top"></div>
+              <div class="face-3d face-3d--bottom"></div>
+            </div>
+            
+            <!-- Лейбли з розмірами -->
+            <div class="dim-label-3d dim-label-3d--length">600 mm</div>
+            <div class="dim-label-3d dim-label-3d--height">200 mm</div>
+            <div class="dim-label-3d dim-label-3d--depth" id="label-3d-depth">375 mm</div>
+          </div>
+          
+          <!-- Повзунок товщини всередині модалки -->
+          <div class="modal-thickness-selector">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px">
+              <span data-lang-ua="Інтерактивна зміна товщини:" data-lang-en="Interactive Thickness Adjust:">Інтерактивна зміна товщини:</span>
+              <strong id="modal-thickness-readout">375 мм</strong>
+            </div>
+            <input type="range" class="physics-range" id="modal-thickness-slider" min="100" max="400" step="50" value="375">
+            <div class="physics-ticks" id="modal-ticks-container">
+              <span>100</span>
+              <span>150</span>
+              <span>200</span>
+              <span>250</span>
+              <span>300</span>
+              <span>350</span>
+              <span>400</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- ── Права колонка: Характеристики та контент ── -->
+        <div class="block-modal__content-pane">
+          <div class="block-modal__eyebrow" id="modal-eyebrow">UDK GAZBETON</div>
+          <h3 class="block-modal__title" id="modal-title">Стіновий блок UDK</h3>
+          
+          <div class="block-modal__desc" id="modal-desc">
+            Високоточні стінові блоки для несучих конструкцій.
+          </div>
+          
+          <div class="table-skel" style="margin: 20px 0; padding:16px" id="modal-specs-wrap">
+            <div class="table-row-skel"><span class="row-key-skel" style="width:100px" data-lang-ua="Клас міцності" data-lang-en="Compressive Strength">Клас міцності</span><span class="row-val-skel" style="width:80px;text-align:right" id="spec-strength">B2.5 / B3.5</span></div>
+            <div class="table-row-skel"><span class="row-key-skel" style="width:100px" data-lang-ua="Середня густина" data-lang-en="Average Density">Середня густина</span><span class="row-val-skel" style="width:80px;text-align:right" id="spec-density">D400 / D500</span></div>
+            <div class="table-row-skel"><span class="row-key-skel" style="width:100px" data-lang-ua="Теплопровідність" data-lang-en="Thermal Conductivity">Теплопровідність</span><span class="row-val-skel" style="width:80px;text-align:right" id="spec-lambda">0.10 / 0.12 Вт/мК</span></div>
+            <div class="table-row-skel"><span class="row-key-skel" style="width:100px" data-lang-ua="Точність розмірів" data-lang-en="Dimensional Accuracy">Точність розмірів</span><span class="row-val-skel" style="width:80px;text-align:right" id="spec-accuracy">±1 мм (Категорія I)</span></div>
+          </div>
+          
+          <div style="display:flex; gap:12px; margin-top:auto">
+            <a href="#calc" class="btn btn--primary" style="flex:1; justify-content:center" id="modal-cta-btn" data-lang-ua="Розрахувати кількість →" data-lang-en="Calculate quantity →">Розрахувати кількість →</a>
+            <a href="dummy.pdf" download class="btn btn--outline" style="font-size:11px" data-lang-ua="Сертифікат ↓" data-lang-en="Certificate ↓">Сертифікат ↓</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="cookie-consent" id="cookie-consent">
     <div class="cookie-consent__title">🍪 Дозвіл на збереження даних (Кеш)</div>

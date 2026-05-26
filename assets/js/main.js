@@ -368,71 +368,171 @@
         });
       });
 
-      // ── ЧАТ ──────────────────────────────────────────
+      // ── ЧАТ-БОТ З МАСШТАБУВАННЯМ ТА НАВІГАЦІЄЮ (ПОКРАЩЕННЯ) ──────────
       var chatOpen = false;
       var chatBtn = document.getElementById('chat-btn');
       var chatPopup = document.getElementById('chat-popup');
+      var chatMessages = document.getElementById('chat-messages');
+      var chatInput = document.getElementById('chat-input');
+      var chatSend = document.getElementById('chat-send');
+      var chatQuick = document.getElementById('chat-quick');
+      var chatResetBtn = document.getElementById('chat-reset-btn');
 
-      var BOT_REPLIES = [
-        [/марк|d400|d500|обрати/i, 'D400 — для 1–2 поверхів. D500 — для 2–4 поверхових будинків. Рекомендуємо D500 250 мм для несучих стін.'],
-        [/дилер|купити|місто/i, 'Розділ «Де купити» — карта 200+ дилерів. Вкажіть місто і підкажемо найближчого.'],
-        [/bim|revit|archicad/i, 'BIM-моделі у розділі «Технічний центр» — завантаження без реєстрації.'],
-        [/ціна|вартість|замовити/i, 'Заповніть форму «Оптовий запит» — КП протягом 1 дня.'],
-        [/faq|питання|довідка/i, 'Відповіді на часті запитання — у розділі FAQ внизу сторінки.'],
-      ];
+      // База відповідей чат-бота (UA / EN)
+      var BOT_RESPONSES = {
+        ua: [
+          [/марк|d400|d500|обрати|яку/i, 'D400 — краще зберігає тепло, ідеальний для 1–2 поверхів. D500 — міцніший (B3.5), підходить для 2–4 поверхів. Для стін без утеплення рекомендуємо UDK D400 375 мм.'],
+          [/дилер|купити|де|магазин/i, 'У нас є мережа з 200+ офіційних дилерів по всій Україні! Карта точок продажу знаходиться в розділі «Де купити» (трохи вище підвалу).'],
+          [/bim|revit|archicad|модел/i, 'Всі BIM-моделі (Revit, ArchiCAD) доступні у нашому «Технічному центрі» абсолютно безкоштовно і без реєстрації!'],
+          [/ціна|вартість|замов|купити опт/i, 'Ціна залежить від обсягу постачання та вашої геолокації. Будь ласка, заповніть форму «Оптовий запит» — наш менеджер надішле вам точний прорахунок з доставкою протягом 1 робочого дня.'],
+          [/faq|питанн|довідка/i, 'Детальні відповіді на технічні та логістичні питання ви можете знайти у розділі FAQ внизу нашої сторінки.'],
+          [/калькулятор|порахувати|обсяг/i, 'Скористайтеся нашим «Інженерним калькулятором» вище — він розрахує точну кількість блоків, піддонів, вагу та навіть кількість вантажівок!']
+        ],
+        en: [
+          [/grade|density|d400|d500|choose/i, 'D400 features superior insulation and is ideal for 1-2 story builds. D500 offers higher strength (B3.5) for 2-4 story load-bearing walls. We recommend D400 375mm for uninsulated designs.'],
+          [/dealer|buy|where|shop/i, 'We have 200+ official dealers across Ukraine. Check the interactive map in the "Where to buy" section near the footer to find the nearest point.'],
+          [/bim|revit|archicad|model/i, 'All BIM assets for Revit and ArchiCAD can be downloaded from our "Technical Center" completely free of charge and with no registration.'],
+          [/price|cost|order|wholesale/i, 'Prices vary based on cargo volumes and freight distance. Please fill out the "Wholesale Inquiry" form to receive a commercial proposal within 1 business day.'],
+          [/faq|question|help/i, 'Detailed answers regarding specifications, delivery, and block properties can be found in our FAQ section at the bottom.'],
+          [/calculator|calculate|volume/i, 'Use our custom "Engineering Calculator" above to instantly get required blocks, pallets, weight, and delivery truck estimates.']
+        ]
+      };
 
-      function getBotReply(text) {
-        for (var i = 0; i < BOT_REPLIES.length; i++) {
-          if (BOT_REPLIES[i][0].test(text)) return BOT_REPLIES[i][1];
+      function getChatLang() {
+        return document.documentElement.lang === 'uk' ? 'ua' : 'en';
+      }
+
+      function addChatMessage(text, sender) {
+        var msg = document.createElement('div');
+        msg.className = 'chat-message chat-message--' + sender;
+        msg.textContent = text;
+        chatMessages.appendChild(msg);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      function getChatBotReply(text) {
+        var lang = getChatLang();
+        var rules = BOT_RESPONSES[lang];
+        for (var i = 0; i < rules.length; i++) {
+          if (rules[i][0].test(text)) return rules[i][1];
         }
-        return 'Для детальної консультації телефонуйте: +38 (067) 996-83-77';
+        return lang === 'ua' 
+          ? 'З радістю проконсультуємо вас детальніше по телефону: +38 (067) 996-83-77 або заповніть форму оптового запиту.'
+          : 'We would love to consult you in detail! Please call us at +38 (067) 996-83-77 or fill out the wholesale inquiry form.';
       }
 
-      function addMessage(text, type) {
-        var div = document.createElement('div');
-        div.className = 'chat-message chat-message--' + type;
-        div.textContent = text;
-        var msgs = document.getElementById('chat-messages');
-        msgs.appendChild(div);
-        msgs.scrollTop = msgs.scrollHeight;
-      }
-
-      function sendUserMessage(text) {
+      function handleChatSend(text) {
         if (!text) return;
-        addMessage(text, 'user');
-        document.getElementById('chat-quick').style.display = 'none';
-        setTimeout(function () { addMessage(getBotReply(text), 'bot'); }, 700);
+        addChatMessage(text, 'user');
+        chatResetBtn.style.display = 'inline-block'; // показуємо кнопку повернення в меню
+        
+        setTimeout(function () {
+          var reply = getChatBotReply(text);
+          addChatMessage(reply, 'bot');
+        }, 600);
       }
 
+      // Обробники кліків по кнопках меню
+      document.querySelectorAll('.chat-quick-btn:not(.chat-quick-btn--reset)').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var quest = btn.getAttribute('data-question');
+          // Локалізуємо питання для візуального відображення в чаті
+          var lang = getChatLang();
+          var visibleText = btn.getAttribute('data-lang-' + lang) || quest;
+          handleChatSend(visibleText);
+        });
+      });
+
+      // Кнопка повернення до головного меню (Reset)
+      chatResetBtn.addEventListener('click', function () {
+        // Очищаємо діалог
+        chatMessages.innerHTML = '';
+        var lang = getChatLang();
+        var helloMsg = lang === 'ua'
+          ? 'Вітаємо! Допоможу підібрати блоки або знайти дилера.'
+          : 'Welcome! I can help you select blocks or find a dealer.';
+        addChatMessage(helloMsg, 'bot');
+        
+        // Ховаємо кнопку скидання
+        chatResetBtn.style.display = 'none';
+      });
+
+      // Надсилання текстового повідомлення
+      chatSend.addEventListener('click', function () {
+        var text = chatInput.value.trim();
+        chatInput.value = '';
+        handleChatSend(text);
+      });
+
+      chatInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          var text = this.value.trim();
+          this.value = '';
+          handleChatSend(text);
+        }
+      });
+
+      // Відкриття / Закриття чату
       chatBtn.addEventListener('click', function () {
         chatOpen = !chatOpen;
         chatPopup.classList.toggle('chat-popup--open', chatOpen);
+        
         var chatSvg = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>';
         var closeSvg = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>';
         document.getElementById('chat-icon').innerHTML = chatOpen ? closeSvg : chatSvg;
         document.getElementById('chat-badge').style.display = 'none';
       });
 
-      document.querySelectorAll('.chat-quick-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          sendUserMessage(btn.getAttribute('data-question'));
-        });
-      });
+      // ── ЛОГІКА РУЧНОГО ЗМІНЕННЯ РОЗМІРУ ЧАТУ ──────────────
+      (function () {
+        var resizer = document.getElementById('chat-resize-handle');
+        if (!resizer) return;
 
-      document.getElementById('chat-send').addEventListener('click', function () {
-        var input = document.getElementById('chat-input');
-        var text = input.value.trim();
-        input.value = '';
-        sendUserMessage(text);
-      });
+        var startX, startY, startWidth, startHeight;
 
-      document.getElementById('chat-input').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
-          var text = this.value.trim();
-          this.value = '';
-          sendUserMessage(text);
+        resizer.addEventListener('mousedown', initDrag, false);
+        resizer.addEventListener('touchstart', initDrag, false);
+
+        function initDrag(e) {
+          e.preventDefault();
+          startX = e.clientX || e.touches[0].clientX;
+          startY = e.clientY || e.touches[0].clientY;
+          startWidth = parseInt(document.defaultView.getComputedStyle(chatPopup).width, 10);
+          startHeight = parseInt(document.defaultView.getComputedStyle(chatPopup).height, 10);
+
+          document.documentElement.addEventListener('mousemove', doDrag, false);
+          document.documentElement.addEventListener('mouseup', stopDrag, false);
+          document.documentElement.addEventListener('touchmove', doDrag, false);
+          document.documentElement.addEventListener('touchend', stopDrag, false);
         }
-      });
+
+        function doDrag(e) {
+          var clientX = e.clientX || e.touches[0].clientX;
+          var clientY = e.clientY || e.touches[0].clientY;
+          
+          // Оскільки вікно чату зафіксоване знизу-праворуч, рух мишки ліворуч/вгору 
+          // збільшує розмір вікна. Отже, віднімаємо дельту.
+          var deltaX = clientX - startX;
+          var deltaY = clientY - startY;
+
+          var newWidth = startWidth - deltaX;
+          var newHeight = startHeight - deltaY;
+
+          // Обмежуємо розміри
+          newWidth = Math.max(280, Math.min(newWidth, window.innerWidth * 0.9));
+          newHeight = Math.max(380, Math.min(newHeight, window.innerHeight * 0.85));
+
+          chatPopup.style.width = newWidth + 'px';
+          chatPopup.style.height = newHeight + 'px';
+        }
+
+        function stopDrag() {
+          document.documentElement.removeEventListener('mousemove', doDrag, false);
+          document.documentElement.removeEventListener('mouseup', stopDrag, false);
+          document.documentElement.removeEventListener('touchmove', doDrag, false);
+          document.documentElement.removeEventListener('touchend', stopDrag, false);
+        }
+      })();
 
       // ── АНІМОВАНІ ЛІЧИЛЬНИКИ ──────────────────────────────
       function animateCounters() {
@@ -722,6 +822,7 @@
           { icon: '📦', title: 'Продукція', desc: 'Газобетонні блоки UDK', href: '#products', keys: 'продукція блоки' },
           { icon: '📐', title: 'Розміри та таблиці', desc: 'Характеристики всіх марок', href: '#sizes', keys: 'розміри таблиця характеристики' },
           { icon: '⚖️', title: 'D400 vs D500', desc: 'Порівняння густин', href: '#compare', keys: 'порівняння d400 d500' },
+          { icon: '🌡️', title: 'Теплофізика', desc: 'Симулятор стіни та точка роси', href: '#physics', keys: 'теплофізика симулятор стіна опір дев поінт' },
           { icon: '🧮', title: 'Калькулятор', desc: 'Розрахувати кількість блоків', href: '#calc', keys: 'калькулятор розрахунок кількість' },
           { icon: '📄', title: 'Документи та BIM', desc: 'ДСТУ, сертифікати, BIM-моделі', href: '#tech', keys: 'документи сертифікати bim дсту' },
           { icon: '🗺️', title: 'Де купити', desc: 'Дилери та точки продажу', href: '#dealers', keys: 'дилери купити де' },
@@ -839,6 +940,7 @@
             var txt = lang === 'ua' ? el.getAttribute('data-lang-ua') : el.getAttribute('data-lang-en');
             if (txt) safeSetContent(el, txt);
           });
+          document.dispatchEvent(new CustomEvent('udkLangChange', { detail: { lang: lang } }));
         }
 
         btnUA.addEventListener('click', function () { applyLang('ua'); });
@@ -1431,6 +1533,586 @@ window.formspree = window.formspree || function () { (formspree.q = formspree.q 
         }
       }, 100), { passive: true });
     }
+
+    // ── ТЕПЛОФІЗИЧНИЙ СИМУЛЯТОР СТІНИ (НОВИЙ РОЗДІЛ) ─────────────
+    (function () {
+      var simGrade = document.getElementById('sim-grade');
+      var simThickness = document.getElementById('sim-thickness');
+      var simThicknessVal = document.getElementById('sim-thickness-val');
+      var simInsulationType = document.getElementById('sim-insulation-type');
+      var simInsulation = document.getElementById('sim-insulation');
+      var simInsulationVal = document.getElementById('sim-insulation-val');
+      var simInsulationWrap = document.getElementById('sim-insulation-wrap');
+      var simTemp = document.getElementById('sim-temp');
+      var simTempVal = document.getElementById('sim-temp-val');
+      var simRValue = document.getElementById('sim-r-value');
+      var simDbnBadge = document.getElementById('sim-dbn-badge');
+      var canvas = document.getElementById('physics-canvas');
+      var warningBox = document.getElementById('sim-warning-box');
+      var warningTitle = document.getElementById('sim-warning-title');
+      var warningDesc = document.getElementById('sim-warning-desc');
+      var legendOutsideTemp = document.getElementById('legend-outside-temp');
+
+      if (!simGrade || !canvas) return;
+
+      var ctx = canvas.getContext('2d');
+
+      // Heat transfer coefficients (W/mK)
+      var lambdas = {
+        block: { 400: 0.10, 500: 0.12 },
+        insulation: { none: 0, wool: 0.040, polystyrene: 0.038 }
+      };
+
+      // Surface air resistances (m2K/W)
+      var R_si = 0.115;
+      var R_se = 0.043;
+      var T_in = 20; // Internal air temp (Celsius)
+      var T_dew = 9.3; // Dew point condensation temperature (at 50% relative humidity, +20C inside)
+
+      function getLang() {
+        return document.documentElement.lang === 'uk' ? 'ua' : 'en';
+      }
+
+      function updateSimulator() {
+        var grade = parseInt(simGrade.value) || 400;
+        var thicknessBlockMm = parseInt(simThickness.value) || 375;
+        var insType = simInsulationType.value;
+        var thicknessInsMm = parseInt(simInsulation.value) || 100;
+        var T_out = parseInt(simTemp.value) || -20;
+        var lang = getLang();
+
+        // 1. Toggle insulation controls
+        if (insType === 'none') {
+          simInsulationWrap.style.display = 'none';
+        } else {
+          simInsulationWrap.style.display = 'block';
+        }
+
+        // 2. Update text labels
+        simThicknessVal.textContent = thicknessBlockMm + ' ' + (lang === 'ua' ? 'мм' : 'mm');
+        simInsulationVal.textContent = thicknessInsMm + ' ' + (lang === 'ua' ? 'мм' : 'mm');
+        simTempVal.textContent = (T_out > 0 ? '+' : '') + T_out + ' °C';
+        legendOutsideTemp.textContent = (T_out > 0 ? '+' : '') + T_out + '°C';
+
+        // 3. Thermal resistances (R = d / lambda)
+        var d_block = thicknessBlockMm / 1000; // in meters
+        var lambda_block = lambdas.block[grade];
+        var R_block = d_block / lambda_block;
+
+        var d_ins = thicknessInsMm / 1000; // in meters
+        var lambda_ins = lambdas.insulation[insType];
+        var R_ins = insType !== 'none' ? d_ins / lambda_ins : 0;
+
+        var R_total = R_si + R_block + R_ins + R_se;
+
+        // 4. Update R-value readout
+        simRValue.textContent = R_total.toFixed(2);
+
+        // 5. Check DBN Compliance (Zone 1 requires R >= 3.3)
+        var isCompliant = R_total >= 3.3;
+        simDbnBadge.className = 'physics-dbn-badge ' + (isCompliant ? 'physics-dbn-badge--pass' : 'physics-dbn-badge--fail');
+        if (isCompliant) {
+          simDbnBadge.textContent = lang === 'ua' ? 'ВІДПОВІДАЄ ДБН ✅' : 'DBN COMPLIANT ✅';
+        } else {
+          simDbnBadge.textContent = lang === 'ua' ? 'НЕ ВІДПОВІДАЄ ДБН ❌' : 'NON-COMPLIANT ❌';
+        }
+
+        // 6. Draw wall structure and temperature gradient on Canvas
+        drawCanvas(thicknessBlockMm, insType, thicknessInsMm, T_out, R_total, R_block, R_ins);
+      }
+
+      function drawCanvas(thickBlock, insType, thickIns, T_out, R_total, R_block, R_ins) {
+        var w = canvas.width = canvas.offsetWidth;
+        var h = canvas.height = canvas.offsetHeight;
+
+        ctx.clearRect(0, 0, w, h);
+
+        // Grid lines (blueprint style)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.lineWidth = 0.5;
+        for (var x = 20; x < w; x += 20) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        }
+        for (var y = 20; y < h; y += 20) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+
+        // X boundaries of visual zones
+        var padLeft = Math.round(w * 0.15); // indoor air zone
+        var padRight = Math.round(w * 0.15); // outdoor air zone
+        var usableWidth = w - padLeft - padRight;
+
+        // Visual width ratios (scaled representation)
+        // Max total thickness: block 400 + insulation 150 = 550mm
+        var maxThickness = 550;
+        var blockRatio = thickBlock / maxThickness;
+        var insRatio = insType !== 'none' ? thickIns / maxThickness : 0;
+        var totalRatio = blockRatio + insRatio;
+
+        // Actual pixel widths
+        var pixelBlock = Math.round(usableWidth * (blockRatio / totalRatio));
+        var pixelIns = insType !== 'none' ? Math.round(usableWidth * (insRatio / totalRatio)) : 0;
+
+        var x0 = padLeft; // start of block
+        var x1 = x0 + pixelBlock; // end of block / start of insulation
+        var x2 = x1 + pixelIns; // end of insulation
+
+        // Colors
+        var colorBlock = 'rgba(255, 255, 255, 0.06)';
+        var colorIns = insType === 'wool' ? 'rgba(234, 179, 8, 0.06)' : 'rgba(56, 189, 248, 0.06)';
+        var borderBlock = 'rgba(255, 255, 255, 0.2)';
+        var borderIns = insType === 'wool' ? 'rgba(234, 179, 8, 0.25)' : 'rgba(56, 189, 248, 0.25)';
+
+        // Heat flow flux (q)
+        var q = (T_in - T_out) / R_total;
+
+        // Boundary temperatures
+        var T_si = T_in - q * R_si; // interior surface temperature
+        var T_boundary = T_si - q * R_block; // boundary block/insulation
+        var T_se = insType !== 'none' ? T_boundary - q * R_ins : T_boundary; // exterior surface temperature
+        var T_so = T_se - q * R_se; // outer air boundary
+
+        // 1. Draw structural layer blocks
+        // Block Layer
+        ctx.fillStyle = colorBlock;
+        ctx.fillRect(x0, 0, pixelBlock, h);
+        ctx.strokeStyle = borderBlock;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x0, 0, pixelBlock, h);
+
+        // Insulation Layer
+        if (pixelIns > 0) {
+          ctx.fillStyle = colorIns;
+          ctx.fillRect(x1, 0, pixelIns, h);
+          ctx.strokeStyle = borderIns;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(x1, 0, pixelIns, h);
+        }
+
+        // Draw Layer Labels
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.font = '9px monospace';
+        ctx.textAlign = 'center';
+        
+        var blockLabel = 'UDK ' + simGrade.value + ' (' + thickBlock + 'mm)';
+        ctx.fillText(blockLabel, x0 + pixelBlock / 2, h - 14);
+
+        if (pixelIns > 0) {
+          var insLabel = (insType === 'wool' ? 'WOOL' : 'EPS') + ' (' + thickIns + 'mm)';
+          ctx.fillStyle = insType === 'wool' ? 'rgba(234, 179, 8, 0.6)' : 'rgba(56, 189, 248, 0.6)';
+          ctx.fillText(insLabel, x1 + pixelIns / 2, h - 14);
+        }
+
+        // 2. Draw temperature heat map overlay
+        var tempGrad = ctx.createLinearGradient(0, 0, w, 0);
+        tempGrad.addColorStop(0, 'rgba(239, 68, 68, 0.08)'); // Warm inside
+        tempGrad.addColorStop(x0 / w, 'rgba(239, 68, 68, 0.08)');
+        tempGrad.addColorStop(x2 / w, 'rgba(56, 189, 248, 0.08)'); // Freezing outside
+        tempGrad.addColorStop(1, 'rgba(56, 189, 248, 0.15)');
+        ctx.fillStyle = tempGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // 3. Map temperatures to vertical graph coordinates
+        // Let Y=30px correspond to +20C, Y=h-40px correspond to -20C
+        var yTempMax = 20;
+        var yTempMin = -20;
+        function getTempY(temp) {
+          var pct = (temp - yTempMin) / (yTempMax - yTempMin); // 0 to 1
+          pct = Math.max(0, Math.min(1, pct));
+          return h - 40 - pct * (h - 70); // vertical scale
+        }
+
+        // Vertices for temperature line
+        var pts = [
+          { x: 0, y: getTempY(T_in) },
+          { x: x0, y: getTempY(T_si) },
+          { x: x1, y: getTempY(T_boundary) },
+          { x: x2, y: getTempY(T_se) },
+          { x: w, y: getTempY(T_out) }
+        ];
+
+        // Draw temperature drop line
+        ctx.strokeStyle = 'rgba(234, 175, 16, 0.8)';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = 'rgba(234, 175, 16, 0.4)';
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (var i = 1; i < pts.length; i++) {
+          ctx.lineTo(pts[i].x, pts[i].y);
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0; // reset
+
+        // Draw temperature markers at boundaries
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 9px monospace';
+        ctx.textAlign = 'center';
+        
+        ctx.fillText((T_si > 0 ? '+' : '') + T_si.toFixed(1) + '°', x0, pts[1].y - 8);
+        ctx.fillText((T_boundary > 0 ? '+' : '') + T_boundary.toFixed(1) + '°', x1, pts[2].y - 8);
+        if (pixelIns > 0) {
+          ctx.fillText((T_se > 0 ? '+' : '') + T_se.toFixed(1) + '°', x2, pts[3].y - 8);
+        }
+
+        // 4. Find and draw the Dew Point (Точка роси) intersection
+        // The condensation dew point occurs at T_dew = 9.3C.
+        // We find the X coordinate where Y(x) = getTempY(9.3C)
+        var dewY = getTempY(T_dew);
+        var dewX = -1;
+
+        // Check each segment to see if 9.3C is crossed
+        for (var i = 0; i < pts.length - 1; i++) {
+          var pA = pts[i];
+          var pB = pts[i+1];
+          var yA = pA.y;
+          var yB = pB.y;
+
+          // Check if dewY is between yA and yB (or yB and yA)
+          if ((dewY >= yA && dewY <= yB) || (dewY >= yB && dewY <= yA)) {
+            // Linear interpolation of X
+            var ratio = (dewY - yA) / (yB - yA);
+            dewX = pA.x + ratio * (pB - pA.x);
+            break;
+          }
+        }
+
+        // Check if condensation risk is inside the room (dew point is left of or on internal surface x0)
+        // Or if interior surface temperature is colder than dew point temperature (T_si <= 9.3C)
+        var isDewWarning = T_si <= T_dew;
+        var lang = getLang();
+
+        if (dewX !== -1) {
+          // Draw horizontal helper line for Dew Point
+          ctx.strokeStyle = 'rgba(239, 68, 68, 0.25)';
+          ctx.setLineDash([4, 4]);
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(0, dewY); ctx.lineTo(w, dewY); ctx.stroke();
+          ctx.setLineDash([]); // reset
+
+          // Draw Dew point label on left margin
+          ctx.fillStyle = 'rgba(239, 68, 68, 0.7)';
+          ctx.font = '8px monospace';
+          ctx.textAlign = 'left';
+          ctx.fillText('9.3°C Dew', 4, dewY - 4);
+
+          // Draw flashing droplet icon at dewX, dewY
+          ctx.beginPath();
+          ctx.arc(dewX, dewY, 5, 0, Math.PI * 2);
+          ctx.fillStyle = isDewWarning ? '#ef4444' : '#10b981';
+          ctx.shadowColor = isDewWarning ? 'rgba(239, 68, 68, 0.6)' : 'rgba(16, 185, 129, 0.6)';
+          ctx.shadowBlur = 10;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          // Visual drop
+          ctx.fillStyle = '#fff';
+          ctx.font = '10px sans-serif';
+          ctx.fillText('💧', dewX - 5, dewY - 8);
+        }
+
+        // 5. Update Warning Box
+        if (isDewWarning) {
+          warningBox.className = 'physics-warning-box physics-warning-box--warning';
+          if (lang === 'ua') {
+            warningTitle.textContent = '⚠️ Ризик конденсату та грибка! Стіна холодна.';
+            warningDesc.textContent = 'Точка роси (' + T_dew + '°C) виходить безпосередньо на внутрішню стіну кімнати. Волога буде конденсуватись на шпалерах. Збільшіть товщину блоку або додайте утеплення!';
+          } else {
+            warningTitle.textContent = '⚠️ Condensation & mould risk! The wall is cold.';
+            warningDesc.textContent = 'The condensation dew point (' + T_dew + '°C) occurs on the interior room plaster. Moisture will form directly on internal walls. Increase block thickness or add insulation!';
+          }
+        } else {
+          warningBox.className = 'physics-warning-box physics-warning-box--safe';
+          if (lang === 'ua') {
+            warningTitle.textContent = '✅ Конденсат безпечний (всередині матеріалу)';
+            warningDesc.textContent = 'Точка роси знаходиться глибоко всередині стінового блоку або в утеплювачі. Конденсація на внутрішній стіні кімнати повністю виключена.';
+          } else {
+            warningTitle.textContent = '✅ Condensation is safe (inside material)';
+            warningDesc.textContent = 'The dew point is safely located inside the core block or insulation material. Condensation on interior walls is completely prevented.';
+          }
+        }
+      }
+
+      // Hook up event listeners
+      simGrade.addEventListener('change', updateSimulator);
+      simThickness.addEventListener('input', updateSimulator);
+      simInsulationType.addEventListener('change', updateSimulator);
+      simInsulation.addEventListener('input', updateSimulator);
+      simTemp.addEventListener('input', updateSimulator);
+
+      // Trigger first run
+      updateSimulator();
+
+      // Redraw simulator when language changes
+      document.addEventListener('udkLangChange', function () {
+        updateSimulator();
+      });
+
+      // Redraw canvas on window resize to ensure correct pixel scale
+      var resizeTimer;
+      window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(updateSimulator, 250);
+      });
+    })();
+
+    // ── ІНТЕРАКТИВНЕ МОДАЛЬНЕ ВІКНО З 3D КУБОМ ─────────────────────────
+    (function () {
+      var modal = document.getElementById('product-modal');
+      var closeBtn = document.getElementById('modal-close');
+      var cuboid = document.getElementById('block-cuboid');
+      var thicknessSlider = document.getElementById('modal-thickness-slider');
+      var thicknessReadout = document.getElementById('modal-thickness-readout');
+      var ticksContainer = document.getElementById('modal-ticks-container');
+      var labelDepth = document.getElementById('label-3d-depth');
+      var scene = document.getElementById('scene-3d-box');
+
+      var modalTitle = document.getElementById('modal-title');
+      var modalDesc = document.getElementById('modal-desc');
+      var modalEyebrow = document.getElementById('modal-eyebrow');
+      var specStrength = document.getElementById('spec-strength');
+      var specDensity = document.getElementById('spec-density');
+      var specLambda = document.getElementById('spec-lambda');
+      var modalCtaBtn = document.getElementById('modal-cta-btn');
+
+      if (!modal || !cuboid || !scene) return;
+
+      // Product dataset
+      var products = {
+        1: {
+          ua: {
+            eyebrow: "01 — Несучий Стіновий Блок",
+            title: "Стінові блоки UDK Gazbeton",
+            desc: "Високоточні конструкційно-теплоізоляційні блоки UDK для зведення несучих зовнішніх та внутрішніх стін будівель (до 4 поверхів). Завдяки категорійній точності геометрії (±1 мм) створюють безшовну стінову кладку, що нівелює будь-яке утворення містків холоду та забезпечує однорідну теплоізоляцію будинку.",
+            cta: "Розрахувати кількість →"
+          },
+          en: {
+            eyebrow: "01 — Load-bearing Wall Block",
+            title: "UDK Wall Blocks",
+            desc: "High-precision structural and insulating UDK blocks designed for load-bearing external and internal walls (up to 4 stories). Extreme dimensional Category I accuracy (±1 mm) eliminates heat-bleeding seams, providing airtight uniform thermal insulation for your house.",
+            cta: "Calculate Quantity →"
+          },
+          strength: "B2.5 / B3.5",
+          density: "D400 / D500",
+          lambda: "0.10 / 0.12 W/mK",
+          thicknesses: [200, 250, 300, 375, 400],
+          defaultThickness: 375
+        },
+        2: {
+          ua: {
+            eyebrow: "02 — Блоки Для Перегородок",
+            title: "Перегородочні блоки UDK",
+            desc: "Легкі газобетонні блоки, спеціально оновлені для зведення міжкімнатних перегородок та самонесучих огороджувальних конструкцій. Вони мають відмінні звукоізоляційні показники, легко ріжуться ручною пилою під будь-які кути, швидко монтуються та створюють мінімальне навантаження на залізобетонні плити перекриття.",
+            cta: "Порахувати перегородки →"
+          },
+          en: {
+            eyebrow: "02 — Partition Block",
+            title: "UDK Partition Blocks",
+            desc: "Lightweight aerated concrete blocks custom-optimized for fast assembly of interior partition walls and self-supporting enclosures. Deliver outstanding acoustic noise cancellation, cut easily to any angle with hand saws, and place minimal dead-weight load on floor slabs.",
+            cta: "Calculate Partitions →"
+          },
+          strength: "B2.5",
+          density: "D400 / D500",
+          lambda: "0.10 / 0.12 W/mK",
+          thicknesses: [50, 75, 100, 125, 150],
+          defaultThickness: 100
+        },
+        3: {
+          ua: {
+            eyebrow: "03 — Спеціальний Елемент",
+            title: "Блоки UDK U-Block",
+            desc: "Спеціальні лоткові U-подібні блоки, що слугують незнімною теплоізоляційною опалубкою для влаштування залізобетонних перемичок над вікнами та дверима, сейсмопоясів, балок та ребер жорсткості. Дозволяють уникнути складного монтажу дерев'яної опалубки та створюють однорідну теплу поверхню стіни під подальшу штукатурку.",
+            cta: "Перейти до розрахунку →"
+          },
+          en: {
+            eyebrow: "03 — Special Formwork",
+            title: "UDK U-Block Elements",
+            desc: "Special U-shaped structural channel elements serving as permanent thermal concrete formwork for lintels over doors/windows, seismically-isolated ring beams, and concrete support structures. Eliminates tedious wood carpentry setups while offering a uniform aerated block texture for facades.",
+            cta: "Go to Calculator →"
+          },
+          strength: "B3.5",
+          density: "D500",
+          lambda: "0.12 W/mK",
+          thicknesses: [250, 300, 375],
+          defaultThickness: 300
+        }
+      };
+
+      var activeProductId = 1;
+
+      function getModalLang() {
+        return document.documentElement.lang === 'uk' ? 'ua' : 'en';
+      }
+
+      function updateModalSpecs() {
+        var p = products[activeProductId];
+        var lang = getModalLang();
+
+        modalEyebrow.textContent = p[lang].eyebrow;
+        modalTitle.textContent = p[lang].title;
+        modalDesc.textContent = p[lang].desc;
+        modalCtaBtn.textContent = p[lang].cta;
+
+        specStrength.textContent = p.strength;
+        specDensity.textContent = p.density;
+        specLambda.textContent = p.lambda;
+      }
+
+      // Open Modal
+      function openModal(id) {
+        activeProductId = id;
+        var p = products[id];
+        
+        // 1. Update text content
+        updateModalSpecs();
+
+        // 2. Setup Slider ticks and min/max
+        var thicknesses = p.thicknesses;
+        thicknessSlider.min = thicknesses[0];
+        thicknessSlider.max = thicknesses[thicknesses.length - 1];
+        
+        var step = 25;
+        thicknessSlider.step = step;
+        
+        // Populate tick markers below slider
+        ticksContainer.innerHTML = '';
+        thicknesses.forEach(function (t) {
+          var span = document.createElement('span');
+          span.textContent = t;
+          ticksContainer.appendChild(span);
+        });
+
+        // Set default value
+        var defVal = p.defaultThickness;
+        thicknessSlider.value = defVal;
+        
+        // 3. Render 3D Block initial geometry
+        update3DBlockGeometry(defVal);
+
+        // 4. Open Modal Window
+        modal.classList.add('block-modal--open');
+        document.body.style.overflow = 'hidden'; // block page scrolling
+      }
+
+      function closeModal() {
+        modal.classList.remove('block-modal--open');
+        document.body.style.overflow = ''; // restore scrolling
+      }
+
+      // Update 3D Block geometric scaling
+      function update3DBlockGeometry(depthMm) {
+        var lang = getModalLang();
+        
+        // We calculate visual depth.
+        // Let length 600mm map to width 160px on screen.
+        // Therefore, 1mm maps to 160/600 = 0.266 pixels.
+        var pixelDepth = depthMm * (160 / 600);
+
+        // Update CSS variable --depth inside cuboid
+        cuboid.style.setProperty('--depth', pixelDepth + 'px');
+
+        // Update face dimension readouts
+        labelDepth.textContent = depthMm + ' ' + (lang === 'ua' ? 'мм' : 'mm');
+        thicknessReadout.textContent = depthMm + ' ' + (lang === 'ua' ? 'мм' : 'mm');
+
+        // Translate the label coordinates based on depth
+        labelDepth.style.transform = 'translateZ(' + (pixelDepth / 2 + 10) + 'px)';
+      }
+
+      // Hook up clicks on UDK Product Cards
+      var cards = document.querySelectorAll('.prod-card');
+      cards.forEach(function (card, index) {
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', function () {
+          // Indexes are 1-based (index + 1)
+          openModal(index + 1);
+        });
+      });
+
+      closeBtn.addEventListener('click', closeModal);
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeModal();
+      });
+
+      thicknessSlider.addEventListener('input', function () {
+        var val = parseInt(this.value);
+        var p = products[activeProductId];
+        
+        // Snapping logic to available sizes
+        var snappedVal = p.thicknesses[0];
+        var minDiff = Math.abs(val - snappedVal);
+        p.thicknesses.forEach(function (t) {
+          var diff = Math.abs(val - t);
+          if (diff < minDiff) {
+            minDiff = diff;
+            snappedVal = t;
+          }
+        });
+        
+        this.value = snappedVal;
+        update3DBlockGeometry(snappedVal);
+      });
+
+      // ── ЛОГІКА ОБЕРТАННЯ 3D БЛОКУ МИШКОЮ ───────────────────────
+      (function () {
+        var isDragging = false;
+        var prevX = 0;
+        var prevY = 0;
+        var rotX = -22; // starting pitch
+        var rotY = 42;  // starting yaw
+
+        scene.addEventListener('mousedown', startRotate, false);
+        scene.addEventListener('touchstart', startRotate, false);
+
+        function startRotate(e) {
+          isDragging = true;
+          prevX = e.clientX || e.touches[0].clientX;
+          prevY = e.clientY || e.touches[0].clientY;
+
+          document.addEventListener('mousemove', doRotate, false);
+          document.addEventListener('mouseup', stopRotate, false);
+          document.addEventListener('touchmove', doRotate, false);
+          document.addEventListener('touchend', stopRotate, false);
+        }
+
+        function doRotate(e) {
+          if (!isDragging) return;
+          e.preventDefault();
+          
+          var clientX = e.clientX || e.touches[0].clientX;
+          var clientY = e.clientY || e.touches[0].clientY;
+
+          var deltaX = clientX - prevX;
+          var deltaY = clientY - prevY;
+
+          prevX = clientX;
+          prevY = clientY;
+
+          rotY += deltaX * 0.5;
+          rotX -= deltaY * 0.5;
+
+          rotX = Math.max(-80, Math.min(80, rotX));
+
+          cuboid.style.transform = 'rotateX(' + rotX + 'deg) rotateY(' + rotY + 'deg)';
+        }
+
+        function stopRotate() {
+          isDragging = false;
+          document.removeEventListener('mousemove', doRotate, false);
+          document.removeEventListener('mouseup', stopRotate, false);
+          document.removeEventListener('touchmove', doRotate, false);
+          document.removeEventListener('touchend', stopRotate, false);
+        }
+      })();
+
+      // Redraw / re-localize modal when language is changed
+      document.addEventListener('udkLangChange', function () {
+        if (modal.classList.contains('block-modal--open')) {
+          updateModalSpecs();
+          update3DBlockGeometry(parseInt(thicknessSlider.value));
+        }
+      });
+    })();
 
   })();
 
