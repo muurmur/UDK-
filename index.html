@@ -7,7 +7,7 @@
   <title>UDK Gazbeton — Виробник автоклавного газобетону</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <!-- PWA -->
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#EAAF10">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -723,7 +723,7 @@
                 id="result-thickness">—</span></div>
             <div class="result__row result__row--logistics"><span class="result__key" data-lang-ua="Вага партії" data-lang-en="Batch weight">Вага партії</span><span
                 class="result__val" id="result-weight">—</span></div>
-            <div class="result__row"><span class="result__key" data-lang-ua="Авто до 10 т" data-lang-en="Truck up to 10 t">Авто до 10 т</span><span class="result__val"
+            <div class="result__row"><span class="result__key" id="result-trucks-label" data-lang-ua="Авто" data-lang-en="Trucks">Авто</span><span class="result__val"
                 id="result-trucks">—</span></div>
           </div>
         </div>
@@ -1204,12 +1204,13 @@
 
   <!-- CHAT WIDGET -->
   <div class="chat-widget">
-    <div class="chat-popup" id="chat-popup">
-      <div class="chat-popup__resize-handle" id="chat-resize-handle"></div>
+    <div class="chat-popup" id="chat-popup" role="dialog" aria-modal="false" aria-label="Чат UDK">
+      <div class="chat-popup__resize-handle" id="chat-resize-handle" role="button" tabindex="-1" aria-label="Змінити розмір вікна (потягніть)" title="Потягніть, щоб змінити розмір"></div>
       <div class="chat-popup__header">
         <div class="chat-popup__status-dot"></div>
         <span data-lang-ua="UDK онлайн" data-lang-en="UDK Online">UDK онлайн</span>
         <small data-lang-ua="Зараз онлайн" data-lang-en="Active now">Зараз онлайн</small>
+        <button class="chat-popup__close" id="chat-close" type="button" aria-label="Закрити чат" title="Закрити">&times;</button>
       </div>
       <div class="chat-popup__messages" id="chat-messages">
         <div class="chat-message chat-message--bot" data-lang-ua="Вітаємо! Допоможу підібрати блоки або знайти дилера." data-lang-en="Welcome! I can help you select blocks or find a dealer.">Вітаємо! Допоможу підібрати блоки або знайти дилера.</div>
